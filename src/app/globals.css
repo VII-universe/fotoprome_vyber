@@ -1,26 +1,107 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* ── Design tokens from the Fotoprome design system ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand palette */
+  --fp-bg:          #faf8f5;
+  --fp-surface:     #ffffff;
+  --fp-ink:         #1c1a17;
+  --fp-ink-2:       #4a4640;
+  --fp-ink-3:       #8a857d;
+  --fp-ink-4:       #c9c3b8;
+  --fp-line:        #ebe6dc;
+  --fp-accent:      #b6536e;
+  --fp-accent-soft: #f4e3e8;
+  --fp-r-card:      12px;
+  --fp-r-photo:     8px;
+  --fp-shadow-sm:   0 1px 2px rgba(28,26,23,0.04), 0 2px 6px rgba(28,26,23,0.04);
+  --fp-shadow-md:   0 8px 24px rgba(28,26,23,0.07), 0 1px 2px rgba(28,26,23,0.04);
+
+  /* shadcn token overrides — mapped to brand palette */
+  --background:         #faf8f5;
+  --foreground:         #1c1a17;
+  --card:               #ffffff;
+  --card-foreground:    #1c1a17;
+  --popover:            #ffffff;
+  --popover-foreground: #1c1a17;
+  --primary:            #b6536e;
+  --primary-foreground: #ffffff;
+  --secondary:          #f4e3e8;
+  --secondary-foreground: #1c1a17;
+  --muted:              #f0ede7;
+  --muted-foreground:   #8a857d;
+  --accent:             #f4e3e8;
+  --accent-foreground:  #1c1a17;
+  --destructive:        oklch(0.55 0.22 27);
+  --border:             #ebe6dc;
+  --input:              #ebe6dc;
+  --ring:               #b6536e;
+  --radius:             12px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--fp-bg);
+    color: var(--fp-ink);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Instrument Serif for display headings ── */
+.font-display {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+/* ── Skeleton shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Heart animation ── */
+@keyframes heartPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+.heart-pop { animation: heartPop 0.28s ease; }
+
+/* ── Photo tile hover ── */
+.photo-tile {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.photo-tile:hover {
+  transform: scale(1.02);
 }
