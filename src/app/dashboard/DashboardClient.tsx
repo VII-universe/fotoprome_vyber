@@ -203,15 +203,13 @@ function JobCard({ job, photoTone, highlight }: { job: Job; photoTone: number; h
 
   return (
     <div style={{
-      borderRadius: "var(--fp-r-card)",
       overflow: "hidden",
       background: "var(--fp-surface)",
-      border: highlight ? "1.5px solid var(--fp-accent)" : "1px solid var(--fp-line)",
-      boxShadow: "var(--fp-shadow-sm)",
-      transition: "box-shadow 0.2s ease",
+      border: highlight ? "1.5px solid var(--fp-ink)" : "1px solid var(--fp-line)",
+      transition: "border-color 0.15s ease",
     }}
-      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "var(--fp-shadow-md)")}
-      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "var(--fp-shadow-sm)")}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--fp-accent)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = highlight ? "var(--fp-ink)" : "var(--fp-line)"; }}
     >
       {/* Clickable photo area */}
       <Link href={`/gallery/${job.id}`} style={{ textDecoration: "none", display: "block" }}>
@@ -255,14 +253,15 @@ function JobCard({ job, photoTone, highlight }: { job: Job; photoTone: number; h
             style={{
               textDecoration: "none",
               display: "inline-flex", alignItems: "center", gap: 5,
-              height: 30, padding: "0 12px", borderRadius: 8,
+              height: 30, padding: "0 12px", borderRadius: 0,
               background: "var(--fp-bg)",
               border: "1px solid var(--fp-line)",
-              fontSize: 12, fontWeight: 600, color: "var(--fp-ink)",
+              fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+              color: "var(--fp-ink)",
               transition: "all 0.15s",
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--fp-accent)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-accent)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--fp-line)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-ink)"; }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-ink)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-bg)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-bg)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-ink)"; }}
           >
             <Package size={12} strokeWidth={2} /> Objednat
           </Link>

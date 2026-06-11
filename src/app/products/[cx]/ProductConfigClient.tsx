@@ -74,7 +74,7 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
   if (done) {
     return (
       <div style={{ maxWidth: 600, margin: "80px auto", textAlign: "center", padding: "0 24px" }}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#e3ebe2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+        <div style={{ width: 72, height: 72, background: "#e3ebe2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
           <Check size={36} style={{ color: "#4a6a4f" }} strokeWidth={2.5} />
         </div>
         <h2 style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, fontSize: 32, margin: "0 0 10px" }}>
@@ -85,8 +85,8 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
         </p>
         <button onClick={() => router.push("/dashboard")} style={{
           all: "unset", cursor: "pointer", marginTop: 28,
-          height: 44, padding: "0 24px", borderRadius: 10,
-          border: "1px solid var(--fp-line)", fontSize: 14, fontWeight: 500, color: "var(--fp-ink)",
+          height: 44, padding: "0 24px", borderRadius: 0,
+          border: "1px solid var(--fp-line)", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--fp-ink)",
           display: "inline-flex", alignItems: "center",
         }}>
           ← Zpět na přehled
@@ -127,26 +127,24 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
 
           return (
             <div key={product.id} style={{
-              borderRadius: 16,
-              border: addon ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
+              border: addon ? "2px solid var(--fp-ink)" : "1px solid var(--fp-line)",
               background: "var(--fp-surface)",
               overflow: "hidden",
-              boxShadow: addon ? "0 4px 20px rgba(182,83,110,0.1)" : "var(--fp-shadow-sm)",
-              transition: "all 0.2s",
+              transition: "border-color 0.15s",
             }}>
               {/* Hero */}
               <div style={{ height: 120, background: visual.bg, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 1px, transparent 1px, transparent 10px)", position: "absolute", inset: 0 }} />
-                <div style={{ width: 60, height: 60, borderRadius: 16, background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 60, height: 60, background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Icon size={28} strokeWidth={1.2} />
                 </div>
                 {addon && (
-                  <div style={{ position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: "50%", background: "var(--fp-accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ position: "absolute", top: 10, right: 10, width: 22, height: 22, background: "var(--fp-ink)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Check size={13} strokeWidth={3} style={{ color: "#fff" }} />
                   </div>
                 )}
                 {product.tag && (
-                  <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 9px", borderRadius: 999, background: visual.accent, color: "#fff", fontSize: 10, fontWeight: 600 }}>{product.tag}</div>
+                  <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 9px", background: visual.accent, color: "#fff", fontSize: 10, fontWeight: 600 }}>{product.tag}</div>
                 )}
               </div>
 
@@ -162,18 +160,18 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
                   {addon ? (
                     <>
                       <button onClick={() => setAddons(prev => prev.filter(a => a.productId !== product.id))} style={{
-                        all: "unset", cursor: "pointer", height: 32, padding: "0 12px", borderRadius: 8,
-                        background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 12, fontWeight: 500, color: "var(--fp-ink-3)",
+                        all: "unset", cursor: "pointer", height: 32, padding: "0 12px", borderRadius: 0,
+                        background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 11, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--fp-ink-3)",
                       }}>Odebrat</button>
                       <button onClick={() => setConfiguringId(product.id as AddonProductId)} style={{
-                        all: "unset", cursor: "pointer", height: 32, padding: "0 12px", borderRadius: 8,
-                        background: "var(--fp-accent-soft)", border: "1px solid var(--fp-accent)", fontSize: 12, fontWeight: 600, color: "var(--fp-accent)",
+                        all: "unset", cursor: "pointer", height: 32, padding: "0 12px", borderRadius: 0,
+                        background: "var(--fp-ink)", border: "1px solid var(--fp-ink)", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--fp-bg)",
                       }}>Upravit</button>
                     </>
                   ) : (
                     <button onClick={() => setConfiguringId(product.id as AddonProductId)} style={{
-                      all: "unset", cursor: "pointer", height: 32, padding: "0 14px", borderRadius: 8,
-                      background: "var(--fp-ink)", color: "#fff", fontSize: 12, fontWeight: 600,
+                      all: "unset", cursor: "pointer", height: 32, padding: "0 14px", borderRadius: 0,
+                      background: "var(--fp-ink)", color: "var(--fp-bg)", fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase",
                       display: "flex", alignItems: "center", gap: 4,
                     }}>
                       + Přidat
@@ -189,7 +187,7 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
       {/* Summary + submit */}
       {addons.length > 0 && (
         <div style={{
-          padding: "20px 24px", borderRadius: 14,
+          padding: "20px 24px", borderRadius: 0,
           background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
           display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16,
           marginBottom: 24,
@@ -202,7 +200,7 @@ export function ProductConfigClient({ cx, initialProduct }: { cx: string; initia
           </div>
           <button onClick={handleSubmit} disabled={submitting} style={{
             all: "unset", cursor: submitting ? "not-allowed" : "pointer",
-            height: 48, padding: "0 24px", borderRadius: 12,
+            height: 48, padding: "0 24px", borderRadius: 0,
             background: "var(--fp-accent)", color: "#fff",
             fontSize: 15, fontWeight: 700,
             display: "flex", alignItems: "center", gap: 8,

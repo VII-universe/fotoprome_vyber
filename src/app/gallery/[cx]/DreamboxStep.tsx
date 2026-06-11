@@ -183,8 +183,8 @@ export function DreamboxStep({ cx }: { cx: string }) {
           {FILTER_PILLS.map((f) => (
             <button key={f.id} onClick={() => setFilterMode(f.id)} style={{
               all: "unset", cursor: "pointer",
-              padding: "8px 14px", borderRadius: 999,
-              fontSize: 12.5, fontWeight: 500,
+              padding: "8px 14px", borderRadius: 0,
+              fontSize: 11.5, fontWeight: 500, letterSpacing: "0.04em",
               flexShrink: 0,
               background: filterMode === f.id ? "var(--fp-ink)"  : "transparent",
               color:      filterMode === f.id ? "#fff"           : "var(--fp-ink-2)",
@@ -195,7 +195,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
               {f.label}
               {f.id === "dreambox" && dreambox.size > 0 && (
                 <span style={{
-                  padding: "1px 7px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                  padding: "1px 7px", fontSize: 11, fontWeight: 600,
                   background: filterMode === "dreambox" ? "rgba(255,255,255,0.25)" : "var(--fp-accent-soft)",
                   color:      filterMode === "dreambox" ? "#fff"                   : "var(--fp-accent)",
                 }}>{dreambox.size}</span>
@@ -326,9 +326,9 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   all: "unset", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   width: "100%", boxSizing: "border-box",
-                  height: 48, borderRadius: 12,
-                  background: "#fff", color: "var(--fp-ink)",
-                  fontSize: 15, fontWeight: 700,
+                  height: 48, borderRadius: 0,
+                  background: "#fff", color: "var(--fp-ink)", border: "1px solid var(--fp-line)",
+                  fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
                 }}>
                   Konfigurovat výběr <ArrowRight size={16} strokeWidth={2.5} />
                 </button>
@@ -371,9 +371,9 @@ export function DreamboxStep({ cx }: { cx: string }) {
               </div>
               <button onClick={() => setStep(2)} style={{
                 all: "unset", cursor: "pointer",
-                height: 44, padding: "0 20px", borderRadius: 10,
+                height: 44, padding: "0 20px", borderRadius: 0,
                 background: "#fff", color: "var(--fp-ink)",
-                fontSize: 14, fontWeight: 600,
+                fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
                 display: "flex", alignItems: "center", gap: 6,
               }}>
                 Pokračovat ke konfiguraci <ArrowRight size={16} strokeWidth={2} />

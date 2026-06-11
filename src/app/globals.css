@@ -7,40 +7,40 @@
 /* ── Design tokens from the Fotoprome design system ── */
 :root {
   /* Brand palette */
-  --fp-bg:          #faf8f5;
-  --fp-surface:     #ffffff;
-  --fp-ink:         #1c1a17;
-  --fp-ink-2:       #4a4640;
-  --fp-ink-3:       #8a857d;
-  --fp-ink-4:       #c9c3b8;
-  --fp-line:        #ebe6dc;
+  --fp-bg:          #f5f0e8;
+  --fp-surface:     #faf8f4;
+  --fp-ink:         #1a1714;
+  --fp-ink-2:       #3d3a35;
+  --fp-ink-3:       #7a7670;
+  --fp-ink-4:       #b8b2a8;
+  --fp-line:        #1a1714;
   --fp-accent:      #b6536e;
-  --fp-accent-soft: #f4e3e8;
-  --fp-r-card:      12px;
-  --fp-r-photo:     8px;
-  --fp-shadow-sm:   0 1px 2px rgba(28,26,23,0.04), 0 2px 6px rgba(28,26,23,0.04);
-  --fp-shadow-md:   0 8px 24px rgba(28,26,23,0.07), 0 1px 2px rgba(28,26,23,0.04);
+  --fp-accent-soft: #f0dde3;
+  --fp-r-card:      0px;
+  --fp-r-photo:     0px;
+  --fp-shadow-sm:   none;
+  --fp-shadow-md:   none;
 
   /* shadcn token overrides — mapped to brand palette */
-  --background:         #faf8f5;
-  --foreground:         #1c1a17;
-  --card:               #ffffff;
-  --card-foreground:    #1c1a17;
-  --popover:            #ffffff;
-  --popover-foreground: #1c1a17;
+  --background:         #f5f0e8;
+  --foreground:         #1a1714;
+  --card:               #faf8f4;
+  --card-foreground:    #1a1714;
+  --popover:            #faf8f4;
+  --popover-foreground: #1a1714;
   --primary:            #b6536e;
   --primary-foreground: #ffffff;
-  --secondary:          #f4e3e8;
-  --secondary-foreground: #1c1a17;
-  --muted:              #f0ede7;
-  --muted-foreground:   #8a857d;
-  --accent:             #f4e3e8;
-  --accent-foreground:  #1c1a17;
+  --secondary:          #ede7da;
+  --secondary-foreground: #1a1714;
+  --muted:              #eae4d8;
+  --muted-foreground:   #7a7670;
+  --accent:             #eae4d8;
+  --accent-foreground:  #1a1714;
   --destructive:        oklch(0.55 0.22 27);
-  --border:             #ebe6dc;
-  --input:              #ebe6dc;
+  --border:             #1a1714;
+  --input:              #1a1714;
   --ring:               #b6536e;
-  --radius:             12px;
+  --radius:             0px;
 }
 
 @theme inline {

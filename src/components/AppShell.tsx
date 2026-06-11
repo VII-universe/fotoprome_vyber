@@ -37,12 +37,12 @@ export function AppShell({ children, userName }: AppShellProps) {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--fp-bg)" }}>
       {/* ── Top nav ── */}
       <header style={{
-        height: 64,
+        height: 58,
         padding: "0 36px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "var(--fp-surface)",
+        background: "var(--fp-bg)",
         borderBottom: "1px solid var(--fp-line)",
         position: "sticky",
         top: 0,
@@ -62,16 +62,17 @@ export function AppShell({ children, userName }: AppShellProps) {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex" style={{ gap: 4 }}>
+          <nav className="hidden md:flex" style={{ gap: 0 }}>
             {NAV.map((item) => (
               <Link key={item.id} href={item.href} style={{
                 textDecoration: "none",
-                padding: "8px 14px",
-                borderRadius: 8,
-                fontSize: 13.5,
-                fontWeight: 500,
+                padding: "8px 16px",
+                fontSize: 12,
+                fontWeight: activeId === item.id ? 600 : 400,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
                 color: activeId === item.id ? "var(--fp-ink)" : "var(--fp-ink-3)",
-                background: activeId === item.id ? "var(--fp-bg)" : "transparent",
+                borderBottom: activeId === item.id ? "1.5px solid var(--fp-ink)" : "1.5px solid transparent",
               }}>
                 {item.label}
               </Link>
@@ -84,25 +85,25 @@ export function AppShell({ children, userName }: AppShellProps) {
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            padding: "4px 12px 4px 4px",
-            borderRadius: 999,
+            gap: 8,
+            padding: "5px 12px",
             border: "1px solid var(--fp-line)",
             cursor: "pointer",
+            background: "transparent",
           }} onClick={handleLogout} title="Odhlásit se">
             <div style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "var(--fp-accent-soft)",
-              color: "var(--fp-accent)",
+              width: 22,
+              height: 22,
+              background: "var(--fp-ink)",
+              color: "var(--fp-bg)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 11.5,
-              fontWeight: 600,
+              fontSize: 9.5,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
             }}>{initials}</div>
-            <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--fp-ink)" }}>
+            <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--fp-ink)" }}>
               {userName ?? "Profil"}
             </span>
           </div>
@@ -129,10 +130,10 @@ export function AppShell({ children, userName }: AppShellProps) {
       {menuOpen && (
         <div style={{
           position: "fixed",
-          top: 64,
+          top: 58,
           left: 0,
           right: 0,
-          background: "var(--fp-surface)",
+          background: "var(--fp-bg)",
           borderBottom: "1px solid var(--fp-line)",
           zIndex: 39,
           padding: "12px 22px 16px",

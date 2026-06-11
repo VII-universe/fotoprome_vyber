@@ -42,29 +42,47 @@ export default function LoginPage() {
       {/* Left — decorative panel (hidden on mobile) */}
       <div className="hidden lg:flex" style={{
         width: "45%",
-        background: "var(--fp-ink)",
+        background: "var(--fp-surface)",
+        borderRight: "1px solid var(--fp-line)",
         flexDirection: "column",
-        justifyContent: "flex-end",
+        justifyContent: "space-between",
         padding: "48px",
         position: "relative",
         overflow: "hidden",
       }}>
-        {/* Striped warm placeholder */}
+        {/* Top: logo */}
         <div style={{
-          position: "absolute", inset: 0,
-          background: "#2a2520",
-          backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 10px)",
-        }} />
-        <div style={{ position: "relative", zIndex: 1 }}>
+          fontFamily: '"Instrument Serif", Georgia, serif',
+          fontSize: 20, letterSpacing: 0.3, color: "var(--fp-ink)",
+        }}>
+          fotoprome<span style={{ color: "var(--fp-accent)", fontStyle: "italic" }}>.</span>
+        </div>
+
+        {/* Center: headline */}
+        <div>
+          <div style={{
+            fontSize: 10, fontWeight: 600, textTransform: "uppercase",
+            letterSpacing: "0.2em", color: "var(--fp-ink-3)", marginBottom: 20,
+          }}>
+            Klientská sekce
+          </div>
           <div style={{
             fontFamily: '"Instrument Serif", Georgia, serif',
-            fontSize: 32, lineHeight: 1.1, color: "#fff", marginBottom: 16,
+            fontSize: 48, lineHeight: 1.05, color: "var(--fp-ink)", marginBottom: 20,
           }}>
-            Vítejte ve vaší<br/><em style={{ color: "var(--fp-accent)" }}>osobní galerii.</em>
+            Vaše fotografie<br/>na jednom místě.
           </div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
+          <div style={{
+            width: 40, height: 1, background: "var(--fp-line)", marginBottom: 20,
+          }} />
+          <div style={{ fontSize: 13, color: "var(--fp-ink-3)", lineHeight: 1.7 }}>
             Vyberte a objednejte fotografie<br/>pohodlně z domova.
           </div>
+        </div>
+
+        {/* Bottom: version label */}
+        <div style={{ fontSize: 10, color: "var(--fp-ink-4)", letterSpacing: "0.1em" }}>
+          fotoprome.cz
         </div>
       </div>
 
@@ -108,7 +126,7 @@ export default function LoginPage() {
                 style={{
                   width: "100%", boxSizing: "border-box",
                   height: 44, padding: "0 14px",
-                  borderRadius: 10,
+                  borderRadius: 0,
                   border: "1px solid var(--fp-line)",
                   background: "var(--fp-surface)",
                   fontSize: 14, color: "var(--fp-ink)",
@@ -137,7 +155,7 @@ export default function LoginPage() {
                 style={{
                   width: "100%", boxSizing: "border-box",
                   height: 44, padding: "0 14px",
-                  borderRadius: 10,
+                  borderRadius: 0,
                   border: "1px solid var(--fp-line)",
                   background: "var(--fp-surface)",
                   fontSize: 14, color: "var(--fp-ink)",
@@ -155,10 +173,10 @@ export default function LoginPage() {
               disabled={loading}
               style={{
                 all: "unset", cursor: loading ? "not-allowed" : "pointer",
-                height: 46, borderRadius: 10,
-                background: loading ? "var(--fp-ink-4)" : "var(--fp-accent)",
-                color: "#fff",
-                fontSize: 14, fontWeight: 600,
+                height: 46, borderRadius: 0,
+                background: loading ? "var(--fp-ink-3)" : "var(--fp-ink)",
+                color: "var(--fp-bg)",
+                fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 gap: 8, marginTop: 8,
                 transition: "background 0.15s",
