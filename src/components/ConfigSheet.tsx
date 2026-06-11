@@ -61,14 +61,14 @@ export function ConfigSheet({ open, onClose, title, children }: ConfigSheetProps
           ...(isMobile ? {
             // Bottom sheet on mobile
             bottom: 0, left: 0, right: 0,
-            borderRadius: "20px 20px 0 0",
+            borderRadius: 0,
             maxHeight: "92dvh",
             transform: open ? "translateY(0)" : "translateY(100%)",
           } : {
             // Slide-over on desktop
             top: 0, right: 0, bottom: 0,
             width: 520,
-            borderRadius: "20px 0 0 20px",
+            borderRadius: 0,
             transform: open ? "translateX(0)" : "translateX(100%)",
           }),
         }}
@@ -76,7 +76,7 @@ export function ConfigSheet({ open, onClose, title, children }: ConfigSheetProps
         {/* Drag handle (mobile only) */}
         {isMobile && (
           <div style={{
-            width: 36, height: 4, borderRadius: 99,
+            width: 36, height: 4, borderRadius: 0,
             background: "var(--fp-line)",
             margin: "12px auto 0",
             flexShrink: 0,

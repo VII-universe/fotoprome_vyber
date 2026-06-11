@@ -186,13 +186,13 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
       {/* 3-column layout — overflow:visible so position:sticky works on the middle column */}
       <div style={{
         display: "grid", gridTemplateColumns: "260px 1fr 380px",
-        borderRadius: 14,
+        borderRadius: 0,
         border: "1px solid var(--fp-line)",
         background: "var(--fp-surface)",
       }}>
 
         {/* ── L: photo list ── */}
-        <div style={{ borderRight: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", borderRadius: "14px 0 0 14px" }}>
+        <div style={{ borderRight: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", borderRadius: 0 }}>
           <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--fp-line)" }}>
             <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
               {dreamboxPhotos.length} fotek
@@ -225,7 +225,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   all: "unset", cursor: "pointer", display: "flex", gap: 10,
                   padding: "10px 8px 10px 16px", flex: 1, minWidth: 0,
                 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "#e8d8c8" }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 0, overflow: "hidden", flexShrink: 0, background: "#e8d8c8" }}>
                     <img
                       src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
                       alt=""
@@ -265,7 +265,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
             <div style={{ padding: 24, width: "100%", maxWidth: 400, margin: "0 auto", boxSizing: "border-box" }}>
               <div
                 onClick={() => setLightboxOpen(true)}
-                style={{ borderRadius: 10, overflow: "hidden", boxShadow: "0 20px 50px rgba(28,26,23,0.15)", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
+                style={{ borderRadius: 0, overflow: "hidden", boxShadow: "0 20px 50px rgba(28,26,23,0.15)", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
               >
                 <img
                   key={`${selectedPhoto.id}-${previewColor}`}
@@ -310,7 +310,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 marginTop: 16,
                 padding: "14px 16px",
                 background: "var(--fp-surface)",
-                borderRadius: 12,
+                borderRadius: 0,
                 border: "1px solid var(--fp-line)",
               }}>
                 <div style={{
@@ -360,13 +360,13 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 <div style={{ display: "flex", gap: 4 }}>
                   <button disabled={selectedIdx === 0} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx - 1].id)} style={{
                     all: "unset", cursor: selectedIdx > 0 ? "pointer" : "default",
-                    width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
                     color: selectedIdx > 0 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                     border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
                   }}><ChevronLeft size={18} strokeWidth={1.7} /></button>
                   <button disabled={selectedIdx === dreamboxPhotos.length - 1} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx + 1].id)} style={{
                     all: "unset", cursor: selectedIdx < dreamboxPhotos.length - 1 ? "pointer" : "default",
-                    width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
                     color: selectedIdx < dreamboxPhotos.length - 1 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                     border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
                   }}><ChevronRight size={18} strokeWidth={1.7} /></button>
@@ -417,7 +417,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 style={{
                   all: "unset", cursor: "pointer",
                   marginTop: 10, width: "100%", boxSizing: "border-box",
-                  height: 36, borderRadius: 8,
+                  height: 36, borderRadius: 0,
                   border: "1.5px dashed var(--fp-line)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 6, fontSize: 12.5, fontWeight: 500,
@@ -433,13 +433,13 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
             {/* ── Retouch ── */}
             <ConfigField label="Retuš">
-              <div style={{ display: "flex", padding: 3, borderRadius: 999, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
+              <div style={{ display: "flex", padding: 3, borderRadius: 0, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
                 {RETOUCH_OPTS.map((r) => {
                   const isActive = (cfg?.retouchLevel ?? "none") === r.id;
                   return (
                     <button key={r.id} onClick={() => setConfig(selectedPid, { retouchLevel: r.id })} style={{
                       all: "unset", cursor: "pointer", flex: 1, textAlign: "center",
-                      padding: "7px 4px", borderRadius: 999, fontSize: 12, fontWeight: 500,
+                      padding: "7px 4px", borderRadius: 0, fontSize: 12, fontWeight: 500,
                       background: isActive ? "var(--fp-surface)" : "transparent",
                       color: isActive ? "var(--fp-ink)" : "var(--fp-ink-3)",
                       boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
@@ -457,7 +457,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 placeholder="Např. zesvětlit pozadí, ostřejší oči…"
                 style={{
                   width: "100%", boxSizing: "border-box", minHeight: 70,
-                  padding: 10, borderRadius: 8,
+                  padding: 10, borderRadius: 0,
                   background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
                   fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
                   resize: "vertical", outline: "none",
@@ -474,7 +474,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         <div style={{
           maxWidth: 1200, margin: "0 auto", marginBottom: 24,
           padding: "10px 10px 10px 20px",
-          borderRadius: 14,
+          borderRadius: 0,
           background: "rgba(28,26,23,0.95)",
           backdropFilter: "blur(20px)",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
@@ -492,7 +492,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setStep(1)} style={{
               all: "unset", cursor: "pointer",
-              height: 44, padding: "0 16px", borderRadius: 10,
+              height: 44, padding: "0 16px", borderRadius: 0,
               background: "rgba(255,255,255,0.12)", color: "#fff",
               fontSize: 13.5, fontWeight: 500,
               display: "flex", alignItems: "center", gap: 6,
@@ -502,7 +502,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
             </button>
             <button onClick={saveAll} disabled={saving} style={{
               all: "unset", cursor: saving ? "not-allowed" : "pointer",
-              height: 44, padding: "0 20px", borderRadius: 10,
+              height: 44, padding: "0 20px", borderRadius: 0,
               background: "#fff", color: "var(--fp-ink)",
               fontSize: 14, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
@@ -544,7 +544,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
             src={`${BASE}${variantUrl(selectedPhoto.fullUrl, previewColor)}`}
             alt={`Foto ${selectedPhoto.num}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 8, objectFit: "contain", cursor: "default" }}
+            style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 0, objectFit: "contain", cursor: "default" }}
           />
 
           {/* Next */}
@@ -657,7 +657,7 @@ function MobileConfiguratorLayout({
               onClick={() => selectPhoto(p.id)}
               style={{
                 all: "unset", cursor: "pointer", flexShrink: 0,
-                width: 52, height: 52, borderRadius: 8, overflow: "hidden",
+                width: 52, height: 52, borderRadius: 0, overflow: "hidden",
                 border: isActive ? "2px solid var(--fp-accent)" : "2px solid transparent",
                 background: "#e8d8c8",
                 boxSizing: "border-box",
@@ -678,7 +678,7 @@ function MobileConfiguratorLayout({
         <div style={{ marginBottom: 16 }}>
           <div
             onClick={() => setLightboxOpen(true)}
-            style={{ borderRadius: 10, overflow: "hidden", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
+            style={{ borderRadius: 0, overflow: "hidden", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
           >
             <img
               key={`${selectedPhoto.id}-${previewColor}`}
@@ -706,13 +706,13 @@ function MobileConfiguratorLayout({
             <div style={{ display: "flex", gap: 4 }}>
               <button disabled={selectedIdx === 0} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx - 1].id)} style={{
                 all: "unset", cursor: selectedIdx > 0 ? "pointer" : "default",
-                width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
                 color: selectedIdx > 0 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                 border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
               }}><ChevronLeft size={18} strokeWidth={1.7} /></button>
               <button disabled={selectedIdx === dreamboxPhotos.length - 1} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx + 1].id)} style={{
                 all: "unset", cursor: selectedIdx < dreamboxPhotos.length - 1 ? "pointer" : "default",
-                width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
                 color: selectedIdx < dreamboxPhotos.length - 1 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                 border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
               }}><ChevronRight size={18} strokeWidth={1.7} /></button>
@@ -727,7 +727,7 @@ function MobileConfiguratorLayout({
           marginBottom: 16,
           padding: "14px 16px",
           background: "var(--fp-surface)",
-          borderRadius: 12,
+          borderRadius: 0,
           border: "1px solid var(--fp-line)",
         }}>
           <div style={{
@@ -799,7 +799,7 @@ function MobileConfiguratorLayout({
           style={{
             all: "unset", cursor: "pointer",
             width: "100%", boxSizing: "border-box",
-            height: 36, borderRadius: 8,
+            height: 36, borderRadius: 0,
             border: "1.5px dashed var(--fp-line)",
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 6, fontSize: 12.5, fontWeight: 500,
@@ -813,13 +813,13 @@ function MobileConfiguratorLayout({
       {/* Retouch */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>Retuš</div>
-        <div style={{ display: "flex", padding: 3, borderRadius: 999, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
+        <div style={{ display: "flex", padding: 3, borderRadius: 0, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
           {RETOUCH_OPTS.map((r) => {
             const isActive = (cfg?.retouchLevel ?? "none") === r.id;
             return (
               <button key={r.id} onClick={() => setConfig(selectedPid, { retouchLevel: r.id })} style={{
                 all: "unset", cursor: "pointer", flex: 1, textAlign: "center",
-                padding: "7px 4px", borderRadius: 999, fontSize: 12, fontWeight: 500,
+                padding: "7px 4px", borderRadius: 0, fontSize: 12, fontWeight: 500,
                 background: isActive ? "var(--fp-surface)" : "transparent",
                 color: isActive ? "var(--fp-ink)" : "var(--fp-ink-3)",
               }}>{r.label}</button>
@@ -837,7 +837,7 @@ function MobileConfiguratorLayout({
           placeholder="Např. zesvětlit pozadí, ostřejší oči…"
           style={{
             width: "100%", boxSizing: "border-box", minHeight: 70,
-            padding: 10, borderRadius: 8,
+            padding: 10, borderRadius: 0,
             background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
             fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
             resize: "vertical", outline: "none",
@@ -850,7 +850,7 @@ function MobileConfiguratorLayout({
         <div style={{
           maxWidth: 1200, margin: "0 auto", marginBottom: 24,
           padding: "10px 10px 10px 20px",
-          borderRadius: 14,
+          borderRadius: 0,
           background: "rgba(28,26,23,0.95)",
           backdropFilter: "blur(20px)",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
@@ -866,7 +866,7 @@ function MobileConfiguratorLayout({
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setStep(1)} style={{
               all: "unset", cursor: "pointer",
-              height: 44, padding: "0 16px", borderRadius: 10,
+              height: 44, padding: "0 16px", borderRadius: 0,
               background: "rgba(255,255,255,0.12)", color: "#fff",
               fontSize: 13.5, fontWeight: 500,
               display: "flex", alignItems: "center", gap: 6,
@@ -876,7 +876,7 @@ function MobileConfiguratorLayout({
             </button>
             <button onClick={saveAll} disabled={saving} style={{
               all: "unset", cursor: saving ? "not-allowed" : "pointer",
-              height: 44, padding: "0 20px", borderRadius: 10,
+              height: 44, padding: "0 20px", borderRadius: 0,
               background: "#fff", color: "var(--fp-ink)",
               fontSize: 14, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
@@ -905,7 +905,7 @@ function MobileConfiguratorLayout({
             src={`${BASE}${variantUrl(selectedPhoto.fullUrl, previewColor)}`}
             alt={`Foto ${selectedPhoto.num}`}
             onClick={(e) => e.stopPropagation()}
-            style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 8, objectFit: "contain", cursor: "default" }}
+            style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 0, objectFit: "contain", cursor: "default" }}
           />
           <button
             onClick={() => setLightboxOpen(false)}
@@ -949,7 +949,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
       onClick={onActivate}
       style={{
       background: "var(--fp-surface)",
-      borderRadius: 14,
+      borderRadius: 0,
       // Aktivní řádek = výrazný accent border, ostatní = jemná čára
       border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
       // Kompenzuj 1px rozdíl okraje aby se layout neskákal
@@ -1009,7 +1009,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
           {canRemove && (
             <button onClick={onRemove} title="Odstranit" style={{
               all: "unset", cursor: "pointer",
-              width: 26, height: 26, borderRadius: 6,
+              width: 26, height: 26, borderRadius: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "var(--fp-ink-4)", fontSize: 16, lineHeight: 1,
               transition: "color 0.15s",
@@ -1065,7 +1065,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                 style={{
                   all: "unset", cursor: "pointer",
                   marginTop: 12, width: "100%", boxSizing: "border-box",
-                  padding: "11px 14px", borderRadius: 10,
+                  padding: "11px 14px", borderRadius: 0,
                   display: "flex", alignItems: "center", gap: 10,
                   border: isAutoActive ? "2px solid var(--fp-accent)" : "1.5px solid var(--fp-line)",
                   background: isAutoActive ? "var(--fp-accent-soft)" : "var(--fp-bg)",
@@ -1119,7 +1119,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
               return (
                 <button key={s.id} onClick={(e) => { e.stopPropagation(); onSizeChange(s.id); }} style={{
                   all: "unset", cursor: "pointer",
-                  padding: "10px 4px 8px", borderRadius: 10,
+                  padding: "10px 4px 8px", borderRadius: 0,
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
                   border: isSel ? "2px solid var(--fp-ink)" : "1.5px solid var(--fp-line)",
                   background: isSel ? "var(--fp-ink)" : "var(--fp-bg)",
@@ -1154,7 +1154,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
             {/* Stepper roztažen na 100% šířky — stejně jako grid formátů */}
             <div style={{
               display: "flex", alignItems: "center",
-              border: "1.5px solid var(--fp-line)", borderRadius: 10,
+              border: "1.5px solid var(--fp-line)", borderRadius: 0,
               background: "var(--fp-bg)", overflow: "hidden", height: 34,
             }}>
               <button
@@ -1237,7 +1237,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
 
   return (
     <div style={{
-      borderRadius: 10,
+      borderRadius: 0,
       border: hasAny ? "1.5px solid var(--fp-accent)" : "1px solid var(--fp-line)",
       overflow: "hidden",
       background: "var(--fp-bg)",
@@ -1260,7 +1260,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
           }}>Pokročilé úpravy</span>
           {hasAny && (
             <span style={{
-              fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 999,
+              fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 0,
               background: "var(--fp-accent-soft)", color: "var(--fp-accent)",
             }}>aktivní</span>
           )}
@@ -1289,7 +1289,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                     onClick={() => onChange({ frame: isActive ? "" : id })}
                     style={{
                       all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
                       border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
                       background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
                       color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
@@ -1305,7 +1305,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                   onClick={() => onChange({ frame: "" })}
                   style={{
                     all: "unset", cursor: "pointer",
-                    padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 500,
+                    padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500,
                     border: "1px solid var(--fp-line)",
                     background: "transparent", color: "var(--fp-ink-4)",
                   }}
@@ -1330,7 +1330,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                     onClick={() => onChange({ curves: isActive ? 0 : opt.id })}
                     style={{
                       all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
                       border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
                       background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
                       color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
@@ -1342,7 +1342,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                 );
               })}
               {curves !== 0 && (
-                <button onClick={() => onChange({ curves: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
+                <button onClick={() => onChange({ curves: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
                   × Zrušit
                 </button>
               )}
@@ -1363,7 +1363,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                     onClick={() => onChange({ scratches: isActive ? 0 : opt.id })}
                     style={{
                       all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
                       border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
                       background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
                       color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
@@ -1375,7 +1375,7 @@ function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: Advanc
                 );
               })}
               {scratches !== 0 && (
-                <button onClick={() => onChange({ scratches: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
+                <button onClick={() => onChange({ scratches: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
                   × Zrušit
                 </button>
               )}

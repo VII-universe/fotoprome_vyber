@@ -155,11 +155,11 @@ export function DreamboxStep({ cx }: { cx: string }) {
           </div>
 
           {/* View toggle — always visible top-right */}
-          <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 10, border: "1px solid var(--fp-line)", background: "var(--fp-surface)", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 2, padding: 3, borderRadius: 0, border: "1px solid var(--fp-line)", background: "var(--fp-surface)", flexShrink: 0 }}>
             {VIEW_OPTS.map(({ id, Icon, title }) => (
               <button key={id} onClick={() => setViewMode(id)} title={title} style={{
                 all: "unset", cursor: "pointer",
-                width: 32, height: 32, borderRadius: 8,
+                width: 32, height: 32, borderRadius: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: viewMode === id ? "var(--fp-ink)" : "transparent",
                 color:      viewMode === id ? "#fff"         : "var(--fp-ink-3)",
@@ -280,7 +280,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
             /* ── Mobile bar: compact 2-row layout ── */
             <div style={{
               maxWidth: 600, margin: "0 auto", marginBottom: 12,
-              borderRadius: 16, background: "rgba(28,26,23,0.97)", backdropFilter: "blur(20px)",
+              borderRadius: 0, background: "rgba(28,26,23,0.97)", backdropFilter: "blur(20px)",
               boxShadow: "0 -4px 24px rgba(28,26,23,0.25)",
               overflow: "hidden",
             }}>
@@ -303,7 +303,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
                     const p = photos.find((ph) => ph.id === id);
                     return p ? (
                       <div key={id} style={{
-                        width: 28, height: 28, borderRadius: 5, overflow: "hidden",
+                        width: 28, height: 28, borderRadius: 0, overflow: "hidden",
                         marginLeft: i === 0 ? 0 : -6, border: "1.5px solid #1c1a17",
                       }}>
                         <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -312,7 +312,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   })}
                   {dreambox.size > 3 && (
                     <div style={{
-                      width: 28, height: 28, borderRadius: 5, marginLeft: -6,
+                      width: 28, height: 28, borderRadius: 0, marginLeft: -6,
                       background: "rgba(255,255,255,0.15)", color: "#fff",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 10, fontWeight: 600, border: "1.5px solid #1c1a17",
@@ -338,7 +338,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
             /* ── Desktop bar: original wide layout ── */
             <div style={{
               maxWidth: 1200, margin: "0 auto", marginBottom: 24, padding: 8,
-              borderRadius: 14, background: "rgba(28,26,23,0.95)", backdropFilter: "blur(20px)",
+              borderRadius: 0, background: "rgba(28,26,23,0.95)", backdropFilter: "blur(20px)",
               display: "flex", alignItems: "center", gap: 14,
               boxShadow: "0 18px 40px rgba(28,26,23,0.2)",
             }}>
@@ -357,13 +357,13 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   {[...dreambox].slice(0, 5).map((id, i) => {
                     const p = photos.find((ph) => ph.id === id);
                     return p ? (
-                      <div key={id} style={{ width: 32, height: 32, borderRadius: 6, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid #1c1a17", background: "#3a3530" }}>
+                      <div key={id} style={{ width: 32, height: 32, borderRadius: 0, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid #1c1a17", background: "#3a3530" }}>
                         <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     ) : null;
                   })}
                   {dreambox.size > 5 && (
-                    <div style={{ width: 32, height: 32, borderRadius: 6, marginLeft: -8, background: "rgba(255,255,255,0.15)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, border: "2px solid #1c1a17" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 0, marginLeft: -8, background: "rgba(255,255,255,0.15)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, border: "2px solid #1c1a17" }}>
                       +{dreambox.size - 5}
                     </div>
                   )}
@@ -392,7 +392,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
           <button disabled={!lbPrev} onClick={(e) => { e.stopPropagation(); lbPrev && setLightboxPhoto(lbPrev); }} style={{ all: "unset", cursor: lbPrev ? "pointer" : "default", position: "absolute", left: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", opacity: lbPrev ? 1 : 0.25 }}>
             <ChevronLeft size={22} />
           </button>
-          <img src={`${BASE}${lightboxPhoto.fullUrl}`} alt={`Foto ${lightboxPhoto.num}`} onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 8, objectFit: "contain" }} />
+          <img src={`${BASE}${lightboxPhoto.fullUrl}`} alt={`Foto ${lightboxPhoto.num}`} onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh", maxWidth: "90vw", borderRadius: 0, objectFit: "contain" }} />
           <button disabled={!lbNext} onClick={(e) => { e.stopPropagation(); lbNext && setLightboxPhoto(lbNext); }} style={{ all: "unset", cursor: lbNext ? "pointer" : "default", position: "absolute", right: 20, width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", opacity: lbNext ? 1 : 0.25 }}>
             <ChevronRight size={22} />
           </button>
@@ -425,7 +425,7 @@ function NaturalTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps
       onMouseLeave={() => setHovered(false)}
       onClick={() => onZoom(photo)}
       style={{
-        position: "relative", borderRadius: "var(--fp-r-photo)", overflow: "hidden",
+        position: "relative", borderRadius: 0, overflow: "hidden",
         cursor: "zoom-in", background: "#ddd0bc",
         outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 2,
@@ -437,7 +437,7 @@ function NaturalTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps
         style={{ display: "block", width: "100%", height: "auto" }} />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.22) 100%)" : "transparent", transition: "background 0.2s" }} />
       {photo.isSuggested && (
-        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", borderRadius: 999, background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", borderRadius: 0, background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
           <Sparkles size={9} strokeWidth={2} />Doporučené
         </div>
       )}
@@ -468,7 +468,7 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
       onClick={() => onZoom(photo)}
       style={{
         position: "relative", aspectRatio: "1/1", overflow: "hidden",
-        borderRadius: "var(--fp-r-photo)", cursor: "zoom-in", background: "#ddd0bc",
+        borderRadius: 0, cursor: "zoom-in", background: "#ddd0bc",
         outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 2,
         transform: hovered ? "scale(1.012)" : "scale(1)",
@@ -479,7 +479,7 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.22) 100%)" : "transparent", transition: "background 0.2s" }} />
       {photo.isSuggested && (
-        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", borderRadius: 999, background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", borderRadius: 0, background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
           <Sparkles size={9} strokeWidth={2} />Doporučené
         </div>
       )}

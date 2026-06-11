@@ -147,7 +147,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
           <button type="submit" disabled={saving} style={{
             all: "unset", cursor: saving ? "not-allowed" : "pointer",
-            height: 40, padding: "0 20px", borderRadius: 10,
+            height: 40, padding: "0 20px", borderRadius: 0,
             background: "var(--fp-accent)", color: "#fff",
             fontSize: 13.5, fontWeight: 500,
             display: "inline-flex", alignItems: "center", gap: 6,

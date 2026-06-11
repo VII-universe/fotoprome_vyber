@@ -97,7 +97,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
             <div
               key={product.id}
               style={{
-                borderRadius: 16,
+                borderRadius: 0,
                 border: productAddons.length > 0 ? "1.5px solid var(--fp-accent)" : "1px solid var(--fp-line)",
                 background: "var(--fp-surface)",
                 overflow: "hidden",
@@ -115,7 +115,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
                 {product.tag && (
                   <div style={{
                     position: "absolute", top: 12, left: 12,
-                    padding: "4px 10px", borderRadius: 999,
+                    padding: "4px 10px", borderRadius: 0,
                     background: accent, color: "#fff",
                     fontSize: 10.5, fontWeight: 600,
                     display: "flex", alignItems: "center", gap: 4,
@@ -125,7 +125,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
                 )}
                 <div style={{
                   position: "absolute", top: 12, right: 12,
-                  padding: "4px 10px", borderRadius: 999,
+                  padding: "4px 10px", borderRadius: 0,
                   background: "rgba(255,255,255,0.92)", backdropFilter: "blur(4px)",
                   fontSize: 11.5, fontWeight: 700, color: accent,
                 }}>
@@ -134,7 +134,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
                 {productAddons.length > 0 && (
                   <div style={{
                     position: "absolute", bottom: 12, right: 12,
-                    padding: "4px 10px", borderRadius: 999,
+                    padding: "4px 10px", borderRadius: 0,
                     background: "var(--fp-accent)", color: "#fff",
                     fontSize: 11, fontWeight: 600,
                     display: "flex", alignItems: "center", gap: 4,
@@ -150,7 +150,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
                 {/* Title row */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                   <div style={{
-                    width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                    width: 32, height: 32, borderRadius: 0, flexShrink: 0,
                     background: productAddons.length > 0 ? "var(--fp-accent-soft)" : "var(--fp-bg)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
@@ -188,7 +188,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
                   style={{
                     all: "unset", cursor: "pointer",
                     display: "inline-flex", alignItems: "center", gap: 6,
-                    height: 36, padding: "0 16px", borderRadius: 9,
+                    height: 36, padding: "0 16px", borderRadius: 0,
                     border: productAddons.length > 0
                       ? "1.5px dashed var(--fp-accent)"
                       : "1.5px solid var(--fp-ink)",
@@ -220,7 +220,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
         <div style={{
           maxWidth: 1200, margin: "0 auto", marginBottom: 20,
           padding: isMobile ? "10px 10px 10px 16px" : "10px 10px 10px 24px",
-          borderRadius: 14,
+          borderRadius: 0,
           background: "rgba(28,26,23,0.96)",
           backdropFilter: "blur(20px)",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
@@ -240,7 +240,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setStep(2)} style={{
               all: "unset", cursor: "pointer",
-              height: 44, padding: "0 14px", borderRadius: 10,
+              height: 44, padding: "0 14px", borderRadius: 0,
               background: "rgba(255,255,255,0.1)", color: "#fff",
               fontSize: 13, fontWeight: 500,
               display: "flex", alignItems: "center", gap: 5,
@@ -250,7 +250,7 @@ export function CrossSellStep({ cx }: { cx: string }) {
             </button>
             <button onClick={() => setStep(4)} style={{
               all: "unset", cursor: "pointer",
-              height: 44, padding: isMobile ? "0 16px" : "0 22px", borderRadius: 10,
+              height: 44, padding: isMobile ? "0 16px" : "0 22px", borderRadius: 0,
               background: "#fff", color: "var(--fp-ink)",
               fontSize: isMobile ? 13 : 14, fontWeight: 700,
               display: "flex", alignItems: "center", gap: 6,
@@ -306,7 +306,7 @@ function AddonItemRow({
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 10,
-      padding: "10px 12px", borderRadius: 10,
+      padding: "10px 12px", borderRadius: 0,
       background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
     }}>
       {/* Mini photo strip */}
@@ -316,14 +316,14 @@ function AddonItemRow({
             const p = dreamboxPhotos.find((ph) => ph.id === pid);
             if (!p) return null;
             return (
-              <div key={pid} style={{ width: 32, height: 32, borderRadius: 5, overflow: "hidden", flexShrink: 0 }}>
+              <div key={pid} style={{ width: 32, height: 32, borderRadius: 0, overflow: "hidden", flexShrink: 0 }}>
                 <img src={`${BASE}${p.fullUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
             );
           })}
           {addon.photoIds.length > 3 && (
             <div style={{
-              width: 32, height: 32, borderRadius: 5, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 0, flexShrink: 0,
               background: "var(--fp-line)", display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 10, fontWeight: 700, color: "var(--fp-ink-3)",
             }}>
@@ -351,7 +351,7 @@ function AddonItemRow({
           title="Upravit"
           style={{
             all: "unset", cursor: "pointer",
-            width: 30, height: 30, borderRadius: 7,
+            width: 30, height: 30, borderRadius: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
             color: "var(--fp-ink-3)", transition: "all 0.15s",
@@ -366,7 +366,7 @@ function AddonItemRow({
           title="Odebrat"
           style={{
             all: "unset", cursor: "pointer",
-            width: 30, height: 30, borderRadius: 7,
+            width: 30, height: 30, borderRadius: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
             color: "var(--fp-ink-3)", transition: "all 0.15s",
@@ -416,7 +416,7 @@ function SinglePhotoConfig({
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
             Fotografie
             {selectedIds.size > 0 && (
-              <span style={{ marginLeft: 8, padding: "2px 7px", borderRadius: 999, background: "var(--fp-accent-soft)", color: "var(--fp-accent)", fontSize: 10, fontWeight: 600 }}>
+              <span style={{ marginLeft: 8, padding: "2px 7px", borderRadius: 0, background: "var(--fp-accent-soft)", color: "var(--fp-accent)", fontSize: 10, fontWeight: 600 }}>
                 {selectedIds.size} {selectedIds.size === 1 ? "vybrána" : "vybrány"}
               </span>
             )}
@@ -441,7 +441,7 @@ function SinglePhotoConfig({
                   style={{
                     cursor: "pointer", position: "relative",
                     width: "100%", paddingBottom: "100%",
-                    borderRadius: 8, overflow: "hidden", background: "#ddd0bc",
+                    borderRadius: 0, overflow: "hidden", background: "#ddd0bc",
                     outline: isActive ? "3px solid var(--fp-accent)" : "2px solid transparent",
                     outlineOffset: 1, transition: "outline 0.12s",
                   }}
@@ -474,7 +474,7 @@ function SinglePhotoConfig({
               <div key={variant.id} onClick={() => setSelectedVariantId(variant.id)} style={{
                 cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "12px 14px", borderRadius: 12,
+                padding: "12px 14px", borderRadius: 0,
                 border: isActive ? "2px solid var(--fp-accent)" : "1.5px solid var(--fp-line)",
                 background: isActive ? "var(--fp-accent-soft)" : "var(--fp-bg)",
                 transition: "all 0.15s",
@@ -518,7 +518,7 @@ function SinglePhotoConfig({
         style={{
           cursor: canConfirm ? "pointer" : "not-allowed",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          height: 52, borderRadius: 14,
+          height: 52, borderRadius: 0,
           background: canConfirm ? "var(--fp-accent)" : "var(--fp-line)",
           color: canConfirm ? "#fff" : "var(--fp-ink-4)",
           fontSize: 15, fontWeight: 700,
@@ -568,7 +568,7 @@ function MultiphotoConfig({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ padding: "12px 14px", borderRadius: 10, background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 13, color: "var(--fp-ink-2)", lineHeight: 1.55 }}>
+      <div style={{ padding: "12px 14px", borderRadius: 0, background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 13, color: "var(--fp-ink-2)", lineHeight: 1.55 }}>
         Vyberte fotografie pro vaši knížku. <strong>Ideálně 20–40 fotek</strong> pro optimální výsledek.
       </div>
 
@@ -576,7 +576,7 @@ function MultiphotoConfig({
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
             Fotografie z Dreamboxu
-            <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 999, background: "var(--fp-accent-soft)", color: "var(--fp-accent)" }}>
+            <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 0, background: "var(--fp-accent-soft)", color: "var(--fp-accent)" }}>
               Vybráno {selectedIds.size}
             </span>
           </div>
@@ -599,7 +599,7 @@ function MultiphotoConfig({
                 style={{
                   cursor: "pointer", position: "relative",
                   width: "100%", paddingBottom: "100%",
-                  borderRadius: 8, overflow: "hidden", background: "#ddd0bc",
+                  borderRadius: 0, overflow: "hidden", background: "#ddd0bc",
                   outline: isActive ? "3px solid var(--fp-accent)" : "2px solid transparent",
                   outlineOffset: 1, transition: "outline 0.12s",
                 }}
@@ -632,7 +632,7 @@ function MultiphotoConfig({
               <button key={variant.id} onClick={() => setSelectedVariantId(variant.id)} style={{
                 all: "unset", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "12px 14px", borderRadius: 10,
+                padding: "12px 14px", borderRadius: 0,
                 border: isActive ? "2px solid var(--fp-accent)" : "1.5px solid var(--fp-line)",
                 background: isActive ? "var(--fp-accent-soft)" : "var(--fp-bg)",
                 transition: "all 0.15s",
@@ -661,7 +661,7 @@ function MultiphotoConfig({
           all: "unset", cursor: canConfirm ? "pointer" : "not-allowed",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           width: "100%", boxSizing: "border-box",
-          height: 52, borderRadius: 14,
+          height: 52, borderRadius: 0,
           background: canConfirm ? "var(--fp-accent)" : "var(--fp-line)",
           color: canConfirm ? "#fff" : "var(--fp-ink-4)",
           fontSize: 15, fontWeight: 700,
@@ -692,7 +692,7 @@ function CanvasMockup() {
           <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 8px)" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.18) 0%, transparent 60%)" }} />
         </div>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.5)", borderRadius: "2px 2px 0 0" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.5)", borderRadius: 0 }} />
         <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 1, background: "rgba(255,255,255,0.35)" }} />
       </div>
     </div>
@@ -750,11 +750,11 @@ function PhotobookMockup() {
         <div style={{
           position: "relative", width: 90, height: 96,
           background: "linear-gradient(135deg, #7060a8 0%, #584888 40%, #6858a0 100%)",
-          borderRadius: "3px 6px 6px 3px",
+          borderRadius: 0,
           boxShadow: "4px 6px 20px rgba(60,40,100,0.3), -1px 0 0 rgba(0,0,0,0.15)",
         }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 55%)", borderRadius: "3px 6px 6px 3px" }} />
-          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 8, background: "rgba(0,0,0,0.15)", borderRadius: "3px 0 0 3px" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 55%)", borderRadius: 0 }} />
+          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 8, background: "rgba(0,0,0,0.15)", borderRadius: 0 }} />
           <div style={{ position: "absolute", top: 14, left: 16, right: 12, height: 46, background: "linear-gradient(140deg, #c4b0d8 0%, #a898c0 50%, #9080b0 100%)", borderRadius: 2, overflow: "hidden" }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 7px)" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.12) 0%, transparent 55%)" }} />

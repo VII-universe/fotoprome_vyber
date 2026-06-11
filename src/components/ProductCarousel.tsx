@@ -91,7 +91,7 @@ export function ProductCarousel({ jobs }: Props) {
               key={product.id}
               style={{
                 flexShrink: 0, width: 280, scrollSnapAlign: "start",
-                borderRadius: 16,
+                borderRadius: 0,
                 border: "1px solid var(--fp-line)",
                 background: "var(--fp-surface)",
                 overflow: "hidden",
@@ -118,7 +118,7 @@ export function ProductCarousel({ jobs }: Props) {
                 {/* Price badge */}
                 <div style={{
                   position: "absolute", top: 12, right: 12,
-                  padding: "4px 10px", borderRadius: 999,
+                  padding: "4px 10px", borderRadius: 0,
                   background: "rgba(255,255,255,0.92)",
                   fontSize: 11.5, fontWeight: 700, color: accent,
                   backdropFilter: "blur(4px)",
@@ -129,7 +129,7 @@ export function ProductCarousel({ jobs }: Props) {
                 {product.tag && (
                   <div style={{
                     position: "absolute", top: 12, left: 12,
-                    padding: "4px 10px", borderRadius: 999,
+                    padding: "4px 10px", borderRadius: 0,
                     background: accent, color: "#fff",
                     fontSize: 10.5, fontWeight: 600,
                   }}>{product.tag}</div>
@@ -216,7 +216,7 @@ function CanvasMockup() {
           }} />
         </div>
         {/* Frame edge highlights */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.5)", borderRadius: "2px 2px 0 0" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "rgba(255,255,255,0.5)", borderRadius: 0 }} />
         <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 1, background: "rgba(255,255,255,0.35)" }} />
       </div>
     </div>
@@ -302,13 +302,13 @@ function PhotobookMockup() {
           position: "relative",
           width: 90, height: 96,
           background: "linear-gradient(135deg, #7060a8 0%, #584888 40%, #6858a0 100%)",
-          borderRadius: "3px 6px 6px 3px",
+          borderRadius: 0,
           boxShadow: "4px 6px 20px rgba(60,40,100,0.3), -1px 0 0 rgba(0,0,0,0.15)",
         }}>
           {/* Cover sheen */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 55%)", borderRadius: "3px 6px 6px 3px" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 55%)", borderRadius: 0 }} />
           {/* Spine line */}
-          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 8, background: "rgba(0,0,0,0.15)", borderRadius: "3px 0 0 3px" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 8, background: "rgba(0,0,0,0.15)", borderRadius: 0 }} />
           {/* Photo preview window on cover */}
           <div style={{
             position: "absolute", top: 14, left: 16, right: 12, height: 46,
@@ -348,7 +348,7 @@ function GalleryPicker({ jobs, productId, onSelect }: {
         <button key={job.id} onClick={() => onSelect(job.id)} style={{
           all: "unset", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 16px", borderRadius: 12,
+          padding: "14px 16px", borderRadius: 0,
           border: "1.5px solid var(--fp-line)", background: "var(--fp-bg)",
           transition: "all 0.15s",
         }}

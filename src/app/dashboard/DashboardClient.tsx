@@ -84,7 +84,7 @@ export function DashboardClient() {
                 {["jobs", "profile"].map((v) => (
                   <TabsTrigger key={v} value={v} style={{
                     fontFamily: "inherit", fontSize: 13, fontWeight: 500,
-                    padding: "8px 14px", borderRadius: 8,
+                    padding: "8px 14px", borderRadius: 0,
                   }}>
                     {v === "jobs" ? "Moje galerie" : "Profil"}
                   </TabsTrigger>
@@ -223,7 +223,7 @@ function JobCard({ job, photoTone, highlight }: { job: Job; photoTone: number; h
           }} />
           <div style={{
             position: "absolute", top: 12, left: 12,
-            padding: "5px 10px", borderRadius: 999,
+            padding: "5px 10px", borderRadius: 0,
             fontSize: 10.5, fontWeight: 600, letterSpacing: 0.2,
             background: st.bg, color: st.fg,
           }}>● {st.label}</div>

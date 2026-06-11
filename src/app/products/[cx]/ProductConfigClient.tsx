@@ -289,7 +289,7 @@ function StandaloneProductConfig({ product, photos, existing, onConfirm }: {
               <button key={variant.id} onClick={() => setSelectedVariantId(variant.id)} style={{
                 all: "unset", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "12px 14px", borderRadius: 10,
+                padding: "12px 14px", borderRadius: 0,
                 border: isActive ? "2px solid var(--fp-accent)" : "1.5px solid var(--fp-line)",
                 background: isActive ? "var(--fp-accent-soft)" : "var(--fp-bg)",
                 transition: "all 0.15s",
@@ -309,7 +309,7 @@ function StandaloneProductConfig({ product, photos, existing, onConfirm }: {
       }} style={{
         all: "unset", cursor: canConfirm ? "pointer" : "not-allowed",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        width: "100%", boxSizing: "border-box", height: 52, borderRadius: 14,
+        width: "100%", boxSizing: "border-box", height: 52, borderRadius: 0,
         background: canConfirm ? "var(--fp-accent)" : "var(--fp-line)",
         color: canConfirm ? "#fff" : "var(--fp-ink-4)", fontSize: 15, fontWeight: 700,
         transition: "all 0.15s",
@@ -329,7 +329,7 @@ function PhotoThumb({ src, isActive, onClick }: { src: string; isActive: boolean
       onClick={onClick}
       style={{
         cursor: "pointer",
-        borderRadius: 8,
+        borderRadius: 0,
         overflow: "hidden",
         outline: isActive ? "3px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 1,

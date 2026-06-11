@@ -65,7 +65,7 @@ export function SummaryStep({ cx }: { cx: string }) {
           Fotograf ji co nejdříve zpracuje. O dokončení vás informujeme e-mailem.
         </p>
         <button onClick={() => { reset(); router.push("/dashboard"); }} style={{
-          all: "unset", cursor: "pointer", height: 44, padding: "0 24px", borderRadius: 10,
+          all: "unset", cursor: "pointer", height: 44, padding: "0 24px", borderRadius: 0,
           border: "1px solid var(--fp-line)", fontSize: 14, fontWeight: 500, color: "var(--fp-ink)",
         }}>
           Zpět na přehled
@@ -89,7 +89,7 @@ export function SummaryStep({ cx }: { cx: string }) {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 360px", gap: 24, alignItems: "start" }}>
         {/* Left: items table */}
         <div>
-          <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", borderRadius: 0, overflow: "hidden" }}>
             {/* Table header */}
             <div style={{
               padding: "14px 20px", borderBottom: "1px solid var(--fp-line)",
@@ -112,7 +112,7 @@ export function SummaryStep({ cx }: { cx: string }) {
                   display: "grid", gridTemplateColumns: "56px 1fr 110px 80px 80px",
                   alignItems: "center", gap: 12,
                 }}>
-                  <div style={{ width: 50, height: 50, borderRadius: 6, overflow: "hidden", background: "#e8d8c8" }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 0, overflow: "hidden", background: "#e8d8c8" }}>
                     <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                   <div>
@@ -141,7 +141,7 @@ export function SummaryStep({ cx }: { cx: string }) {
               placeholder="Cokoli, co bychom měli vědět o této objednávce…"
               style={{
                 width: "100%", boxSizing: "border-box", minHeight: 80,
-                padding: 14, borderRadius: 12,
+                padding: 14, borderRadius: 0,
                 background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
                 fontFamily: "inherit", fontSize: 13.5, color: "var(--fp-ink)",
                 resize: "vertical", outline: "none",
@@ -167,16 +167,16 @@ export function SummaryStep({ cx }: { cx: string }) {
                     .filter(Boolean) as GalleryPhoto[];
                   if (!product) return null;
                   return (
-                    <div key={addon.productId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--fp-bg)", borderRadius: 10, border: "1px solid var(--fp-line)" }}>
+                    <div key={addon.productId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--fp-bg)", borderRadius: 0, border: "1px solid var(--fp-line)" }}>
                       {/* Photo collage */}
                       <div style={{ display: "flex", flexShrink: 0 }}>
                         {previewPhotos.map((p, i) => (
-                          <div key={p.id} style={{ width: 36, height: 36, borderRadius: 6, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid var(--fp-surface)" }}>
+                          <div key={p.id} style={{ width: 36, height: 36, borderRadius: 0, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid var(--fp-surface)" }}>
                             <img src={`${BASE}${p.fullUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
                         ))}
                         {addon.photoIds.length > 3 && (
-                          <div style={{ width: 36, height: 36, borderRadius: 6, marginLeft: -8, background: "var(--fp-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, border: "2px solid var(--fp-surface)" }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 0, marginLeft: -8, background: "var(--fp-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, border: "2px solid var(--fp-surface)" }}>
                             +{addon.photoIds.length - 3}
                           </div>
                         )}
@@ -201,7 +201,7 @@ export function SummaryStep({ cx }: { cx: string }) {
         {/* Right: summary sidebar */}
         <div style={{
           background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
-          borderRadius: 12, padding: 22, position: "sticky", top: 80,
+          borderRadius: 0, padding: 22, position: "sticky", top: 80,
         }}>
           <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22, marginBottom: 16 }}>Souhrn</div>
 
@@ -222,7 +222,7 @@ export function SummaryStep({ cx }: { cx: string }) {
                 <button key={opt.value} onClick={() => useGalleryStore.setState({ delivery: opt.value })} style={{
                   all: "unset", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 12px", borderRadius: 8,
+                  padding: "10px 12px", borderRadius: 0,
                   border: delivery === opt.value ? "1.5px solid var(--fp-accent)" : "1px solid var(--fp-line)",
                   background: delivery === opt.value ? "var(--fp-accent-soft)" : "transparent",
                 }}>
@@ -241,7 +241,7 @@ export function SummaryStep({ cx }: { cx: string }) {
 
           <button onClick={handleSubmit} disabled={submitting} style={{
             all: "unset", cursor: submitting ? "not-allowed" : "pointer",
-            width: "100%", height: 48, borderRadius: 10,
+            width: "100%", height: 48, borderRadius: 0,
             background: "var(--fp-accent)", color: "#fff",
             fontSize: 14, fontWeight: 600,
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -260,7 +260,7 @@ export function SummaryStep({ cx }: { cx: string }) {
       {/* Back button */}
       <div style={{ marginTop: 24 }}>
         <button onClick={() => setStep(3)} style={{
-          all: "unset", cursor: "pointer", height: 40, padding: "0 16px", borderRadius: 10,
+          all: "unset", cursor: "pointer", height: 40, padding: "0 16px", borderRadius: 0,
           border: "1px solid var(--fp-line)", fontSize: 13.5, fontWeight: 500,
           display: "flex", alignItems: "center", gap: 6, color: "var(--fp-ink)",
         }}>
