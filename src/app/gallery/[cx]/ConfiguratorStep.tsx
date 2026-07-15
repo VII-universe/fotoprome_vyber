@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import {
-  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, FRAME_LABELS,
-  type ColorOption, type SizeOption, type FrameOption,
+  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX,
+  type ColorOption, type SizeOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { GalleryStep } from "@/lib/gallery-store";
@@ -106,14 +106,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   const safeIdx = activePrintIdx < prints.length ? activePrintIdx : 0;
   const previewColor: ColorOption = prints[safeIdx]?.color ?? "color";
 
-  // CSS filter for active print line's advanced options
   const activeLine = prints[safeIdx];
-  const previewFilter = (() => {
-    const parts: string[] = [];
-    if (activeLine?.curves   && activeLine.curves   > 0) parts.push("contrast(1.12) brightness(1.04)");
-    if (activeLine?.scratches && activeLine.scratches > 0) parts.push("sepia(0.18) contrast(1.08)");
-    return parts.length ? parts.join(" ") : "none";
-  })();
 
   const total = calcTotal(dreamboxPhotos, configs);
 
@@ -318,20 +311,8 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   key={`${selectedPhoto.id}-${previewColor}`}
                   src={`${BASE}${variantUrl(selectedPhoto.fullUrl, previewColor)}`}
                   alt={`Foto ${selectedPhoto.num}`}
-                  style={{
-                    display: "block", width: "100%", objectFit: "cover",
-                    transition: "filter 0.3s ease, opacity 0.25s ease",
-                    filter: previewFilter,
-                  }}
+                  style={{ display: "block", width: "100%", objectFit: "cover" }}
                 />
-                {activeLine?.frame && (activeLine.frame as string) !== "" && (
-                  <div style={{
-                    position: "absolute", inset: 8,
-                    border: "2px solid rgba(255,255,255,0.7)",
-                    pointerEvents: "none",
-                    boxShadow: "inset 0 0 12px rgba(0,0,0,0.25)",
-                  }} />
-                )}
                 <div
                   onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
                   style={{
@@ -398,7 +379,6 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                     }}
                     onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
                     onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-                    onAdvanced={(patch) => setPrintLine(selectedPid, idx, patch)}
                     onRemove={() => {
                       removePrintLine(selectedPid, idx);
                       setActivePrintIdx(0);
@@ -715,7 +695,6 @@ function MobileConfiguratorLayout({
             }}
             onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
             onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-            onAdvanced={(patch) => setPrintLine(selectedPid, idx, patch)}
             onRemove={() => {
               removePrintLine(selectedPid, idx);
               setActivePrintIdx(0);
@@ -838,20 +817,19 @@ function MobileConfiguratorLayout({
 // ── Single print line row ──
 
 interface PrintLineRowProps {
-  line: { color: ColorOption; size: SizeOption; qty: number; frame?: FrameOption; curves?: number; scratches?: number };
+  line: { color: ColorOption; size: SizeOption; qty: number };
   index: number;
   isActive: boolean;
   onActivate: () => void;
   onColorChange: (c: ColorOption) => void;
   onSizeChange: (s: SizeOption) => void;
   onQtyChange: (q: number) => void;
-  onAdvanced: (patch: { frame?: FrameOption; curves?: number; scratches?: number }) => void;
   onRemove: () => void;
   canRemove: boolean;
   isFirst: boolean;
 }
 
-function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onAdvanced, onRemove, canRemove }: PrintLineRowProps) {
+function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove }: PrintLineRowProps) {
   const price     = SIZES.find((s) => s.id === line.size)?.price ?? 0;
   const lineTotal = price * line.qty;
   const colorDef  = COLORS.find((c) => c.id === line.color) ?? COLORS[0];
@@ -1104,200 +1082,11 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
           </div>
         )}
 
-        {/* ── Pokročilé úpravy — per-formát accordion ── */}
-        <AdvancedOptionsAccordion
-          frame={line.frame ?? ""}
-          curves={line.curves ?? 0}
-          scratches={line.scratches ?? 0}
-          onChange={onAdvanced}
-        />
       </div>
     </div>
   );
 }
 
-
-// ── Accordion: Pokročilé úpravy ────────────────────────────────────────────
-
-const FRAME_OPTIONS = Object.entries(FRAME_LABELS) as [FrameOption, string][];
-
-const CURVES_OPTIONS = [
-  { id: 0,  label: "Žádné" },
-  { id: 1,  label: "Křivky #1" },
-  { id: 2,  label: "Křivky #2" },
-  { id: 3,  label: "Křivky #3" },
-  { id: 23, label: "Křivky #23" },
-];
-
-const SCRATCHES_OPTIONS = [
-  { id: 0,  label: "Žádné" },
-  { id: 1,  label: "Škrábance #1" },
-  { id: 2,  label: "Škrábance #2" },
-  { id: 18, label: "Škrábance #18" },
-];
-
-interface AdvancedProps {
-  frame: FrameOption;
-  curves: number;
-  scratches: number;
-  onChange: (patch: { frame?: FrameOption; curves?: number; scratches?: number }) => void;
-}
-
-function AdvancedOptionsAccordion({ frame, curves, scratches, onChange }: AdvancedProps) {
-  const [open, setOpen] = useState(false);
-  const hasAny = frame !== "" || curves !== 0 || scratches !== 0;
-
-  return (
-    <div style={{
-      borderRadius: 0,
-      border: hasAny ? "1.5px solid var(--fp-accent)" : "1px solid var(--fp-line)",
-      overflow: "hidden",
-      background: "var(--fp-bg)",
-      transition: "border-color 0.15s",
-    }}>
-      {/* Header — trigger */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        style={{
-          all: "unset", cursor: "pointer",
-          width: "100%", boxSizing: "border-box",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 14px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{
-            fontSize: 10.5, fontWeight: 700, color: "var(--fp-ink-3)",
-            textTransform: "uppercase", letterSpacing: "0.14em",
-          }}>Pokročilé úpravy</span>
-          {hasAny && (
-            <span style={{
-              fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 0,
-              background: "var(--fp-accent-soft)", color: "var(--fp-accent)",
-            }}>aktivní</span>
-          )}
-        </div>
-        <ChevronDown
-          size={16} strokeWidth={2}
-          style={{ color: "var(--fp-ink-3)", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-        />
-      </button>
-
-      {/* Body */}
-      {open && (
-        <div style={{ padding: "0 14px 16px", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid var(--fp-line)" }}>
-
-          {/* Rámečky — klik na aktivní = odznačit */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 8 }}>
-              Rámeček
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {FRAME_OPTIONS.filter(([id]) => id !== "").map(([id, label]) => {
-                const isActive = frame === id;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => onChange({ frame: isActive ? "" : id })}
-                    style={{
-                      all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
-                      border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
-                      background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
-                      color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {label} {isActive && "✓"}
-                  </button>
-                );
-              })}
-              {frame !== "" && (
-                <button
-                  onClick={() => onChange({ frame: "" })}
-                  style={{
-                    all: "unset", cursor: "pointer",
-                    padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500,
-                    border: "1px solid var(--fp-line)",
-                    background: "transparent", color: "var(--fp-ink-4)",
-                  }}
-                >
-                  × Zrušit
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Křivky — klik na aktivní = odznačit */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 8 }}>
-              Křivky
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {CURVES_OPTIONS.filter((o) => o.id !== 0).map((opt) => {
-                const isActive = curves === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => onChange({ curves: isActive ? 0 : opt.id })}
-                    style={{
-                      all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
-                      border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
-                      background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
-                      color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {opt.label} {isActive && "✓"}
-                  </button>
-                );
-              })}
-              {curves !== 0 && (
-                <button onClick={() => onChange({ curves: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
-                  × Zrušit
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Škrábance — klik na aktivní = odznačit */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 8 }}>
-              Škrábance
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {SCRATCHES_OPTIONS.filter((o) => o.id !== 0).map((opt) => {
-                const isActive = scratches === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => onChange({ scratches: isActive ? 0 : opt.id })}
-                    style={{
-                      all: "unset", cursor: "pointer",
-                      padding: "6px 12px", borderRadius: 0, fontSize: 12.5, fontWeight: 500,
-                      border: isActive ? "2px solid var(--fp-accent)" : "1px solid var(--fp-line)",
-                      background: isActive ? "var(--fp-accent-soft)" : "var(--fp-surface)",
-                      color: isActive ? "var(--fp-accent)" : "var(--fp-ink-2)",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {opt.label} {isActive && "✓"}
-                  </button>
-                );
-              })}
-              {scratches !== 0 && (
-                <button onClick={() => onChange({ scratches: 0 })} style={{ all: "unset", cursor: "pointer", padding: "6px 12px", borderRadius: 0, fontSize: 12, fontWeight: 500, border: "1px solid var(--fp-line)", background: "transparent", color: "var(--fp-ink-4)" }}>
-                  × Zrušit
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ConfigField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
