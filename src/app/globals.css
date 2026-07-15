@@ -102,6 +102,10 @@
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* ── Filmstrip item: show ⋯ button on hover ── */
+.filmstrip-menu-btn { opacity: 0; }
+.filmstrip-item:hover .filmstrip-menu-btn { opacity: 1; }
+
 /* ── Photo tile hover ── */
 .photo-tile {
   transition: transform 0.2s ease, box-shadow 0.2s ease;

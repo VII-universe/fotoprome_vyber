@@ -6,7 +6,7 @@ import {
   type ColorOption, type SizeOption, type FrameOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { GalleryStep } from "@/lib/gallery-store";
@@ -53,9 +53,12 @@ function calcTotal(dreamboxPhotos: GalleryPhoto[], configs: ReturnType<typeof us
 }
 
 export function ConfiguratorStep({ cx }: { cx: string }) {
-  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep } = useGalleryStore();
+  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart } = useGalleryStore();
   const [saving, setSaving] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [menuPid, setMenuPid] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
+  const [removing, setRemoving] = useState(false);
   const isMobile = useIsMobile();
 
   const dreamboxPhotos = [...dreambox]
@@ -73,6 +76,29 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   function selectPhoto(pid: string) {
     setSelectedPid(pid);
     setActivePrintIdx(0);
+  }
+
+  async function removeFromFilmstrip(pid: string) {
+    const photo = photos.find(p => p.id === pid);
+    setRemoving(true);
+    try {
+      await fetch("/api/dreambox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ act: "drop", pid, did: photo?.dreamboxItemId ?? "0", zone: photo?.zone ?? "p", cx }),
+      });
+      toggleHeart(pid, photo?.zone ?? "p");
+      const remaining = dreamboxPhotos.filter(p => p.id !== pid);
+      if (pid === selectedPid && remaining.length > 0) {
+        const idx = dreamboxPhotos.findIndex(p => p.id === pid);
+        selectPhoto(remaining[Math.min(idx, remaining.length - 1)].id);
+      }
+    } catch {
+      toast.error("Nepodařilo se odebrat fotku");
+    } finally {
+      setRemoving(false);
+      setMenuPid(null);
+    }
   }
 
   // Preview color = color of the currently active print line
@@ -178,49 +204,110 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
       </div>
 
       {/* ── Photo filmstrip ── */}
-      <div style={{ background: "var(--fp-ink-2)", borderBottom: "1px solid var(--fp-line)" }}>
+      <div style={{ background: "#ddd7cc", borderBottom: "1px solid var(--fp-line)" }}>
         <div
           className="no-scrollbar"
-          style={{
-            display: "flex", gap: 3, overflowX: "auto",
-            padding: "10px 12px", alignItems: "center",
-          }}
+          style={{ display: "flex", gap: 4, overflowX: "auto", padding: "10px 12px", alignItems: "center" }}
         >
           {dreamboxPhotos.map((p) => {
             const isActive = p.id === selectedPid;
             const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
             const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
+            const isMenuOpen = menuPid === p.id;
             return (
-              <button
+              <div
                 key={p.id}
-                onClick={() => selectPhoto(p.id)}
-                style={{
-                  all: "unset", cursor: "pointer", flexShrink: 0, display: "block",
-                  position: "relative", height: 80, overflow: "hidden",
-                  outline: isActive ? "2px solid #fff" : "2px solid transparent",
-                  outlineOffset: "2px",
-                  opacity: isActive ? 1 : 0.55,
-                  transition: "opacity 0.2s, outline-color 0.15s",
-                }}
+                className="filmstrip-item"
+                style={{ position: "relative", flexShrink: 0, height: 80 }}
               >
-                <img
-                  src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
-                  alt=""
-                  style={{ height: "100%", width: "auto", display: "block" }}
-                />
+                {/* Photo button */}
+                <button
+                  onClick={() => { selectPhoto(p.id); setMenuPid(null); }}
+                  style={{
+                    all: "unset", cursor: "pointer", display: "block",
+                    height: 80, overflow: "hidden",
+                    outline: isActive ? "2px solid var(--fp-ink)" : "2px solid transparent",
+                    outlineOffset: "2px",
+                    opacity: isActive ? 1 : 0.6,
+                    transition: "opacity 0.2s, outline-color 0.15s",
+                  }}
+                >
+                  <img
+                    src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
+                    alt=""
+                    style={{ height: "100%", width: "auto", display: "block" }}
+                  />
+                </button>
+                {/* Configured dot */}
                 {lineCount > 0 && (
                   <div style={{
-                    position: "absolute", bottom: 4, right: 4,
+                    position: "absolute", bottom: 4, left: 4,
                     width: 6, height: 6,
                     background: "var(--fp-accent)",
-                    boxShadow: "0 0 0 1.5px var(--fp-ink-2)",
+                    boxShadow: "0 0 0 1.5px #ddd7cc",
+                    pointerEvents: "none",
                   }} />
                 )}
-              </button>
+                {/* Options button — visible on hover via CSS */}
+                <button
+                  className="filmstrip-menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setMenuPos({ x: rect.left, y: rect.bottom + 6 });
+                    setMenuPid(isMenuOpen ? null : p.id);
+                  }}
+                  style={{
+                    all: "unset", cursor: "pointer",
+                    position: "absolute", top: 4, right: 4,
+                    width: 22, height: 22,
+                    background: isMenuOpen ? "var(--fp-ink)" : "rgba(28,26,23,0.55)",
+                    color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "opacity 0.15s, background 0.15s",
+                  }}
+                >
+                  <MoreHorizontal size={12} strokeWidth={2} />
+                </button>
+              </div>
             );
           })}
         </div>
       </div>
+
+      {/* Filmstrip dropdown menu */}
+      {menuPid && (
+        <>
+          <div style={{ position: "fixed", inset: 0, zIndex: 99 }} onClick={() => setMenuPid(null)} />
+          <div style={{
+            position: "fixed", top: menuPos.y, left: menuPos.x,
+            zIndex: 100, minWidth: 180,
+            background: "var(--fp-surface)",
+            border: "1px solid var(--fp-line)",
+            boxShadow: "0 8px 24px rgba(28,26,23,0.12)",
+          }}>
+            <button
+              onClick={() => removeFromFilmstrip(menuPid)}
+              disabled={removing}
+              style={{
+                all: "unset", cursor: removing ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", gap: 10,
+                width: "100%", boxSizing: "border-box",
+                padding: "11px 16px",
+                fontSize: 13, color: removing ? "var(--fp-ink-4)" : "#c0392b",
+                transition: "background 0.12s",
+              }}
+              onMouseEnter={e => { if (!removing) (e.currentTarget as HTMLElement).style.background = "#fdf2f0"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              {removing
+                ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                : <Trash2 size={14} strokeWidth={1.8} />}
+              Odebrat z výběru
+            </button>
+          </div>
+        </>
+      )}
 
       {/* ── 2-column layout: preview | config ── */}
       <div style={{
