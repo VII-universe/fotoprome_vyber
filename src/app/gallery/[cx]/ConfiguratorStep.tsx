@@ -238,16 +238,6 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                     style={{ height: "100%", width: "auto", display: "block" }}
                   />
                 </button>
-                {/* Configured dot */}
-                {lineCount > 0 && (
-                  <div style={{
-                    position: "absolute", bottom: 4, left: 4,
-                    width: 6, height: 6,
-                    background: "var(--fp-accent)",
-                    boxShadow: "0 0 0 1.5px #ddd7cc",
-                    pointerEvents: "none",
-                  }} />
-                )}
                 {/* Options button — visible on hover via CSS */}
                 <button
                   className="filmstrip-menu-btn"
