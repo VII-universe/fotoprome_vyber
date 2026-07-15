@@ -65,9 +65,10 @@ function MasonryGrid({
   );
 }
 
-// Smart grid: landscape photos span 2 columns (4× bigger cell than today)
-// Portrait: 1 col × 2 rows — Landscape: 2 cols × 2 rows
-// grid-auto-flow: dense fills gaps automatically
+// Smart grid: portrait a landscape mají podobnou vizuální váhu
+// Portrait: 1 col × 3 rows  → přirozený poměr 2:3
+// Landscape: 2 cols × 2 rows → přirozený poměr ~3:2
+// grid-auto-flow: dense vyplní mezery automaticky
 function SmartGrid({
   photos, numCols, gap, rowH, landscapeIds, children,
 }: {
@@ -91,7 +92,7 @@ function SmartGrid({
         return (
           <div key={photo.id} style={{
             gridColumn: isLandscape ? "span 2" : "span 1",
-            gridRow: "span 2",
+            gridRow: isLandscape ? "span 2" : "span 3",
             overflow: "hidden",
             position: "relative",
           }}>
@@ -271,28 +272,22 @@ export function DreamboxStep({ cx }: { cx: string }) {
         </div>
 
       ) : viewMode === "large" ? (
-        // ── Velké náhledy: SmartGrid 2 sloupce — landscape dostane plnou šíři ──
-        <SmartGrid
-          photos={filtered}
-          numCols={isMobile ? 2 : 2}
-          gap={isMobile ? 8 : 12}
-          rowH={isMobile ? 160 : 240}
-          landscapeIds={landscapeIds}
-        >
+        // ── Velké náhledy: přirozené výšky, 2 sloupce — fotky v plné proporci ──
+        <MasonryGrid photos={filtered} numCols={isMobile ? 1 : 2} gap={isMobile ? 8 : 12}>
           {(photo) => (
             <NaturalTile key={photo.id} photo={photo}
               selected={dreambox.has(photo.id)} saving={savingId === photo.id}
               onHeart={handleHeart} onZoom={setLightboxPhoto}
-              fillHeight onOrientationDetect={handleOrientationDetect} />
+              onOrientationDetect={handleOrientationDetect} />
           )}
-        </SmartGrid>
+        </MasonryGrid>
 
       ) : isDreamboxView && dreambox.size > 0 ? (
         // ── Dreambox: DnD na desktopu, SmartGrid na mobilu ──
         isMobile ? (
           <SmartGrid
             photos={dreamboxOrder.map(id => photos.find(ph => ph.id === id)).filter(Boolean) as GalleryPhoto[]}
-            numCols={2} gap={8} rowH={150} landscapeIds={landscapeIds}
+            numCols={2} gap={6} rowH={120} landscapeIds={landscapeIds}
           >
             {(photo) => (
               <NaturalTile key={photo.id} photo={photo} selected saving={savingId === photo.id}
@@ -314,12 +309,12 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Masonry výchozí: SmartGrid — landscape span 2 sloupce ──
+        // ── Masonry výchozí: SmartGrid — portrait 1col×3rows, landscape 2col×2rows ──
         <SmartGrid
           photos={filtered}
           numCols={isMobile ? 2 : 4}
           gap={isMobile ? 6 : 10}
-          rowH={isMobile ? 150 : 190}
+          rowH={isMobile ? 120 : 150}
           landscapeIds={landscapeIds}
         >
           {(photo) => (
