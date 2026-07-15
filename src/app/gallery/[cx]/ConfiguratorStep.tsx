@@ -178,80 +178,47 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
       </div>
 
       {/* ── Photo filmstrip ── */}
-      <div style={{ background: "var(--fp-ink)", borderBottom: "1px solid var(--fp-line)" }}>
-        <div style={{ display: "flex", alignItems: "stretch" }}>
-          {/* Scrollable thumbnails */}
-          <div style={{
-            flex: 1, display: "flex", gap: 3, overflowX: "auto",
+      <div style={{ background: "var(--fp-ink-2)", borderBottom: "1px solid var(--fp-line)" }}>
+        <div
+          className="no-scrollbar"
+          style={{
+            display: "flex", gap: 3, overflowX: "auto",
             padding: "10px 12px", alignItems: "center",
-          }}>
-            {dreamboxPhotos.map((p, i) => {
-              const isActive = p.id === selectedPid;
-              const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
-              const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => selectPhoto(p.id)}
-                  style={{
-                    all: "unset", cursor: "pointer", flexShrink: 0, display: "block",
-                    position: "relative", height: 80, overflow: "hidden",
-                    outline: isActive ? "2px solid #fff" : "2px solid transparent",
-                    outlineOffset: "2px",
-                    opacity: isActive ? 1 : 0.45,
-                    transition: "opacity 0.2s, outline-color 0.15s",
-                  }}
-                >
-                  <img
-                    src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
-                    alt=""
-                    style={{ height: "100%", width: "auto", display: "block" }}
-                  />
-                  {lineCount > 0 && (
-                    <div style={{
-                      position: "absolute", bottom: 4, right: 4,
-                      width: 6, height: 6,
-                      background: "var(--fp-accent)",
-                      boxShadow: "0 0 0 1.5px var(--fp-ink)",
-                    }} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          {/* Actions panel */}
-          <div style={{
-            display: "flex", flexDirection: "column", justifyContent: "center",
-            alignItems: "center", gap: 8, padding: "0 22px",
-            borderLeft: "1px solid rgba(255,255,255,0.1)",
-            flexShrink: 0, minWidth: 110,
-          }}>
-            <button
-              onClick={() => {
-                if (!cfg) return;
-                dreamboxPhotos.forEach((p) => {
-                  if (p.id !== selectedPid) setConfig(p.id, { prints: cfg.prints.map(l => ({ ...l })), retouchLevel: cfg.retouchLevel });
-                });
-                toast.success("Aplikováno na všechny fotky");
-              }}
-              style={{
-                all: "unset", cursor: "pointer",
-                padding: "7px 14px",
-                border: "1px solid rgba(255,255,255,0.22)",
-                background: "transparent",
-                fontSize: 10.5, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase",
-                color: "rgba(255,255,255,0.8)", textAlign: "center", whiteSpace: "nowrap",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
-            >
-              Aplikovat<br />na vše
-            </button>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: "ui-monospace, monospace", letterSpacing: "0.1em" }}>
-              {dreamboxPhotos.length} FOTEK
-            </div>
-          </div>
+          }}
+        >
+          {dreamboxPhotos.map((p) => {
+            const isActive = p.id === selectedPid;
+            const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
+            const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
+            return (
+              <button
+                key={p.id}
+                onClick={() => selectPhoto(p.id)}
+                style={{
+                  all: "unset", cursor: "pointer", flexShrink: 0, display: "block",
+                  position: "relative", height: 80, overflow: "hidden",
+                  outline: isActive ? "2px solid #fff" : "2px solid transparent",
+                  outlineOffset: "2px",
+                  opacity: isActive ? 1 : 0.55,
+                  transition: "opacity 0.2s, outline-color 0.15s",
+                }}
+              >
+                <img
+                  src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
+                  alt=""
+                  style={{ height: "100%", width: "auto", display: "block" }}
+                />
+                {lineCount > 0 && (
+                  <div style={{
+                    position: "absolute", bottom: 4, right: 4,
+                    width: 6, height: 6,
+                    background: "var(--fp-accent)",
+                    boxShadow: "0 0 0 1.5px var(--fp-ink-2)",
+                  }} />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

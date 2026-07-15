@@ -98,6 +98,10 @@
 }
 .heart-pop { animation: heartPop 0.28s ease; }
 
+/* ── Hide scrollbar ── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ── Photo tile hover ── */
 .photo-tile {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
