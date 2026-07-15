@@ -620,7 +620,7 @@ function MobileConfiguratorLayout({
       </div>
 
       {/* Horizontal thumb strip */}
-      <div style={{
+      <div className="no-scrollbar" style={{
         display: "flex", gap: 8,
         overflowX: "auto",
         WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
