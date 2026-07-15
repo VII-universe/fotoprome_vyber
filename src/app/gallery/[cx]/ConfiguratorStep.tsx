@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import {
-  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, RETOUCH_LABELS, FRAME_LABELS,
-  type ColorOption, type SizeOption, type RetouchLevel, type FrameOption,
+  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, FRAME_LABELS,
+  type ColorOption, type SizeOption, type FrameOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
@@ -37,12 +37,6 @@ const SIZES: { id: SizeOption; label: string; sub: string; price: number }[] = [
   { id: "L",            label: "L",           sub: "A3 30×42",  price: 480 },
 ];
 
-const RETOUCH_OPTS: { id: RetouchLevel; label: string }[] = [
-  { id: "none",   label: "Bez retuše" },
-  { id: "light",  label: "Málo" },
-  { id: "medium", label: "Středně" },
-  { id: "heavy",  label: "Hodně" },
-];
 
 // PrintLine model: { color, size, qty }
 // Multi-format = multiple PrintLines per photo
@@ -183,89 +177,101 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         <StepDots active={1} />
       </div>
 
-      {/* 3-column layout — overflow:visible so position:sticky works on the middle column */}
+      {/* ── Photo filmstrip ── */}
+      <div style={{ border: "1px solid var(--fp-line)", background: "var(--fp-surface)", marginBottom: -1 }}>
+        <div style={{ display: "flex", alignItems: "stretch" }}>
+          {/* Scrollable thumbnails */}
+          <div style={{ flex: 1, display: "flex", overflowX: "auto", background: "var(--fp-bg)" }}>
+            {dreamboxPhotos.map((p, i) => {
+              const isActive = p.id === selectedPid;
+              const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
+              const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => selectPhoto(p.id)}
+                  style={{
+                    all: "unset", cursor: "pointer", flexShrink: 0,
+                    position: "relative", width: 80, height: 80,
+                    borderRight: "1px solid var(--fp-line)",
+                    borderBottom: isActive ? "3px solid var(--fp-accent)" : "3px solid transparent",
+                    overflow: "hidden", background: "#e8d8c8", boxSizing: "border-box",
+                    transition: "border-color 0.15s",
+                  }}
+                >
+                  <img
+                    src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                  <div style={{
+                    position: "absolute", bottom: 4, left: 4,
+                    padding: "1px 5px",
+                    background: isActive ? "var(--fp-accent)" : "rgba(28,26,23,0.6)",
+                    color: "#fff", fontSize: 9, fontWeight: 700,
+                    fontFamily: "ui-monospace, monospace", lineHeight: 1.5,
+                  }}>{String(i + 1).padStart(2, "0")}</div>
+                  {lineCount > 0 && (
+                    <div style={{
+                      position: "absolute", top: 4, right: 4,
+                      width: 7, height: 7,
+                      background: "var(--fp-accent)",
+                      boxShadow: "0 0 0 1.5px var(--fp-surface)",
+                    }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {/* Actions panel */}
+          <div style={{
+            display: "flex", flexDirection: "column", justifyContent: "center",
+            alignItems: "center", gap: 6, padding: "0 18px",
+            borderLeft: "1px solid var(--fp-line)",
+            background: "var(--fp-surface)", flexShrink: 0, minWidth: 100,
+          }}>
+            <button
+              onClick={() => {
+                if (!cfg) return;
+                dreamboxPhotos.forEach((p) => {
+                  if (p.id !== selectedPid) setConfig(p.id, { prints: cfg.prints.map(l => ({ ...l })), retouchLevel: cfg.retouchLevel });
+                });
+                toast.success("Aplikováno na všechny fotky");
+              }}
+              style={{
+                all: "unset", cursor: "pointer",
+                padding: "7px 14px", border: "1px solid var(--fp-line)",
+                background: "var(--fp-bg)",
+                fontSize: 11, fontWeight: 600, letterSpacing: "0.04em",
+                color: "var(--fp-ink)", textAlign: "center", whiteSpace: "nowrap",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-ink)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-bg)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-bg)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-ink)"; }}
+            >
+              Aplikovat<br />na vše
+            </button>
+            <div style={{ fontSize: 9.5, color: "var(--fp-ink-4)", fontFamily: "ui-monospace, monospace" }}>
+              {dreamboxPhotos.length} fotek
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2-column layout: preview | config ── */}
       <div style={{
-        display: "grid", gridTemplateColumns: "260px 1fr 380px",
-        borderRadius: 0,
+        display: "grid", gridTemplateColumns: "1fr 380px",
         border: "1px solid var(--fp-line)",
         background: "var(--fp-surface)",
       }}>
 
-        {/* ── L: photo list ── */}
-        <div style={{ borderRight: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", borderRadius: 0 }}>
-          <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--fp-line)" }}>
-            <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
-              {dreamboxPhotos.length} fotek
-            </span>
-            <button onClick={() => {
-              if (!cfg) return;
-              dreamboxPhotos.forEach((p) => {
-                if (p.id !== selectedPid) setConfig(p.id, { prints: cfg.prints.map(l => ({ ...l })), retouchLevel: cfg.retouchLevel });
-              });
-              toast.success("Aplikováno na všechny fotky");
-            }} style={{ all: "unset", cursor: "pointer", fontSize: 11, color: "var(--fp-accent)", fontWeight: 500 }}>
-              Aplikovat na vše
-            </button>
-          </div>
-          {dreamboxPhotos.map((p, i) => {
-            const c = configs[p.id];
-            const isActive = p.id === selectedPid;
-            const lineCount = c?.prints?.filter(l => l.qty > 0).length ?? 0;
-            const thumbColor = c?.prints[0]?.color ?? "color";
-            return (
-              <div key={p.id} style={{
-                display: "flex", alignItems: "center",
-                borderLeft: isActive ? "2px solid var(--fp-accent)" : "2px solid transparent",
-                background: isActive ? "var(--fp-accent-soft)" : "transparent",
-                borderBottom: "1px solid var(--fp-line)",
-                position: "relative",
-              }}>
-                {/* Klikatelná oblast pro výběr fotky */}
-                <button onClick={() => selectPhoto(p.id)} style={{
-                  all: "unset", cursor: "pointer", display: "flex", gap: 10,
-                  padding: "10px 8px 10px 16px", flex: 1, minWidth: 0,
-                }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 0, overflow: "hidden", flexShrink: 0, background: "#e8d8c8" }}>
-                    <img
-                      src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
-                      alt=""
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 10, color: "var(--fp-ink-3)" }}>#{String(i + 1).padStart(2, "0")} · {p.num}</div>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, marginTop: 2, color: isActive ? "var(--fp-accent)" : "var(--fp-ink)" }}>
-                      {lineCount > 0 ? `${lineCount} ${lineCount === 1 ? "formát" : "formáty"}` : <span style={{ color: "var(--fp-ink-4)" }}>nenakonfigurováno</span>}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 1 }}>
-                      {RETOUCH_LABELS[c?.retouchLevel ?? "none"].toLowerCase()}
-                    </div>
-                  </div>
-                </button>
-
-                {/* Koš — odebere fotku z Dreamboxu */}
-                <RemoveFromDreambox photoId={p.id} cx={cx} isActive={isActive}
-                  onRemoved={() => {
-                    // Po odebrání přepni na sousední fotku
-                    const remaining = dreamboxPhotos.filter(ph => ph.id !== p.id);
-                    if (remaining.length > 0) {
-                      const nextIdx = Math.min(i, remaining.length - 1);
-                      selectPhoto(remaining[nextIdx].id);
-                    }
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── M: preview — sticky, jede se scrollem ── */}
+        {/* ── L: photo preview — sticky ── */}
         <div style={{ background: "var(--fp-bg)", alignSelf: "start", position: "sticky", top: 80 }}>
           {selectedPhoto && (
-            <div style={{ padding: 24, width: "100%", maxWidth: 400, margin: "0 auto", boxSizing: "border-box" }}>
+            <div style={{ padding: 32, boxSizing: "border-box" }}>
               <div
                 onClick={() => setLightboxOpen(true)}
-                style={{ borderRadius: 0, overflow: "hidden", boxShadow: "0 20px 50px rgba(28,26,23,0.15)", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
+                style={{ overflow: "hidden", background: "#e8d8c8", cursor: "zoom-in", position: "relative" }}
               >
                 <img
                   key={`${selectedPhoto.id}-${previewColor}`}
@@ -277,25 +283,21 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                     filter: previewFilter,
                   }}
                 />
-                {/* Frame overlay — tenký rámeček uvnitř fotky */}
                 {activeLine?.frame && (activeLine.frame as string) !== "" && (
                   <div style={{
                     position: "absolute", inset: 8,
                     border: "2px solid rgba(255,255,255,0.7)",
-                    borderRadius: 2,
                     pointerEvents: "none",
                     boxShadow: "inset 0 0 12px rgba(0,0,0,0.25)",
                   }} />
                 )}
-                {/* Lupa — pravý horní roh, 50% opacity → 100% po najetí */}
                 <div
                   onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
                   style={{
                     position: "absolute", top: 10, right: 10,
-                    width: 34, height: 34, borderRadius: "50%",
+                    width: 34, height: 34,
                     background: "rgba(255,255,255,0.88)", backdropFilter: "blur(8px)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
                     opacity: 0.5, cursor: "zoom-in",
                     transition: "opacity 0.2s",
                   }}
@@ -305,68 +307,22 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   <ZoomIn size={16} style={{ color: "var(--fp-ink)" }} />
                 </div>
               </div>
-              {/* Color swatches under preview */}
-              <div style={{
-                marginTop: 16,
-                padding: "14px 16px",
-                background: "var(--fp-surface)",
-                borderRadius: 0,
-                border: "1px solid var(--fp-line)",
-              }}>
-                <div style={{
-                  fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)",
-                  textTransform: "uppercase", letterSpacing: "0.15em",
-                  marginBottom: 12, textAlign: "center",
-                }}>
-                  Náhled barevnosti
-                </div>
-                <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
-                  {COLORS.map((c) => {
-                    const isActive = previewColor === c.id;
-                    return (
-                      <button key={c.id} onClick={() => {
-                        if (!cfg) return;
-                        if (cfg.prints.length === 0) addPrintLine(selectedPid);
-                        setPrintLine(selectedPid, 0, { color: c.id });
-                      }} style={{
-                        all: "unset", cursor: "pointer",
-                        display: "flex", flexDirection: "column", alignItems: "center", gap: 7,
-                      }}>
-                        {/* Swatch — same design as PrintLineRow */}
-                        <div style={{
-                          width: 40, height: 40, borderRadius: "50%",
-                          background: c.dot,
-                          boxShadow: isActive
-                            ? `0 0 0 3px var(--fp-surface), 0 0 0 5px var(--fp-accent)`
-                            : "0 0 0 1.5px rgba(28,26,23,0.10)",
-                          transform: isActive ? "scale(1.12)" : "scale(1)",
-                          transition: "all 0.18s ease",
-                        }} />
-                        <span style={{
-                          fontSize: 10.5, fontWeight: isActive ? 600 : 400,
-                          color: isActive ? "var(--fp-accent)" : "var(--fp-ink-3)",
-                          whiteSpace: "nowrap",
-                          transition: "color 0.15s",
-                        }}>{COLOR_LABELS[c.id]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Navigation arrows */}
-              <div style={{ marginTop: 16, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
-                <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{selectedPhoto.num}</div>
+              <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>
+                  #{selectedPhoto.num} · {selectedIdx + 1} / {dreamboxPhotos.length}
+                </div>
                 <div style={{ display: "flex", gap: 4 }}>
                   <button disabled={selectedIdx === 0} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx - 1].id)} style={{
                     all: "unset", cursor: selectedIdx > 0 ? "pointer" : "default",
-                    width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
                     color: selectedIdx > 0 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                     border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
                   }}><ChevronLeft size={18} strokeWidth={1.7} /></button>
                   <button disabled={selectedIdx === dreamboxPhotos.length - 1} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx + 1].id)} style={{
                     all: "unset", cursor: selectedIdx < dreamboxPhotos.length - 1 ? "pointer" : "default",
-                    width: 34, height: 34, borderRadius: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
                     color: selectedIdx < dreamboxPhotos.length - 1 ? "var(--fp-ink-2)" : "var(--fp-ink-4)",
                     border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
                   }}><ChevronRight size={18} strokeWidth={1.7} /></button>
@@ -378,7 +334,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
         {/* ── R: config panel ── */}
 
-        <div style={{ borderLeft: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", padding: "20px 20px 100px", borderRadius: "0 14px 14px 0" }}>
+        <div style={{ borderLeft: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", padding: "20px 20px 100px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
 
             {/* ── Print lines (multi-format) ── */}
@@ -430,24 +386,6 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 <Plus size={14} strokeWidth={2} /> Přidat další formát
               </button>
             </div>
-
-            {/* ── Retouch ── */}
-            <ConfigField label="Retuš">
-              <div style={{ display: "flex", padding: 3, borderRadius: 0, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
-                {RETOUCH_OPTS.map((r) => {
-                  const isActive = (cfg?.retouchLevel ?? "none") === r.id;
-                  return (
-                    <button key={r.id} onClick={() => setConfig(selectedPid, { retouchLevel: r.id })} style={{
-                      all: "unset", cursor: "pointer", flex: 1, textAlign: "center",
-                      padding: "7px 4px", borderRadius: 0, fontSize: 12, fontWeight: 500,
-                      background: isActive ? "var(--fp-surface)" : "transparent",
-                      color: isActive ? "var(--fp-ink)" : "var(--fp-ink-3)",
-                      boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                    }}>{r.label}</button>
-                  );
-                })}
-              </div>
-            </ConfigField>
 
             {/* ── Note ── */}
             <ConfigField label="Poznámka k fotce">
@@ -721,55 +659,6 @@ function MobileConfiguratorLayout({
         </div>
       )}
 
-      {/* Color swatches panel */}
-      {selectedPhoto && (
-        <div style={{
-          marginBottom: 16,
-          padding: "14px 16px",
-          background: "var(--fp-surface)",
-          borderRadius: 0,
-          border: "1px solid var(--fp-line)",
-        }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)",
-            textTransform: "uppercase", letterSpacing: "0.15em",
-            marginBottom: 12, textAlign: "center",
-          }}>
-            Náhled barevnosti
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
-            {COLORS.map((c) => {
-              const isActive = previewColor === c.id;
-              return (
-                <button key={c.id} onClick={() => {
-                  if (!cfg) return;
-                  if (cfg.prints.length === 0) addPrintLine(selectedPid);
-                  setPrintLine(selectedPid, 0, { color: c.id });
-                }} style={{
-                  all: "unset", cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 7,
-                }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: c.dot,
-                    boxShadow: isActive
-                      ? `0 0 0 3px var(--fp-surface), 0 0 0 5px var(--fp-accent)`
-                      : "0 0 0 1.5px rgba(28,26,23,0.10)",
-                    transform: isActive ? "scale(1.12)" : "scale(1)",
-                    transition: "all 0.18s ease",
-                  }} />
-                  <span style={{
-                    fontSize: 10.5, fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "var(--fp-accent)" : "var(--fp-ink-3)",
-                    whiteSpace: "nowrap",
-                  }}>{COLOR_LABELS[c.id]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Print line cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         {(cfg?.prints ?? []).map((line, idx) => (
@@ -808,24 +697,6 @@ function MobileConfiguratorLayout({
         >
           <Plus size={14} strokeWidth={2} /> Přidat další formát
         </button>
-      </div>
-
-      {/* Retouch */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>Retuš</div>
-        <div style={{ display: "flex", padding: 3, borderRadius: 0, background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
-          {RETOUCH_OPTS.map((r) => {
-            const isActive = (cfg?.retouchLevel ?? "none") === r.id;
-            return (
-              <button key={r.id} onClick={() => setConfig(selectedPid, { retouchLevel: r.id })} style={{
-                all: "unset", cursor: "pointer", flex: 1, textAlign: "center",
-                padding: "7px 4px", borderRadius: 0, fontSize: 12, fontWeight: 500,
-                background: isActive ? "var(--fp-surface)" : "transparent",
-                color: isActive ? "var(--fp-ink)" : "var(--fp-ink-3)",
-              }}>{r.label}</button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Note */}
