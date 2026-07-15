@@ -38,8 +38,7 @@ const FILTER_PILLS: { id: FilterMode; label: string }[] = [
   { id: "dreambox",  label: "Dreambox" },
 ];
 
-// JS masonry: rozdělí fotky do N sloupců (round-robin)
-// Žádné CSS column balancing → žádné ořezy, funguje s libovolným počtem fotek
+// JS masonry: round-robin columns (kept for DnD dreambox view)
 function distributeColumns<T>(items: T[], numCols: number): T[][] {
   const cols = Array.from({ length: numCols }, (): T[] => []);
   items.forEach((item, i) => cols[i % numCols].push(item));
@@ -66,6 +65,44 @@ function MasonryGrid({
   );
 }
 
+// Smart grid: landscape photos span 2 columns (4× bigger cell than today)
+// Portrait: 1 col × 2 rows — Landscape: 2 cols × 2 rows
+// grid-auto-flow: dense fills gaps automatically
+function SmartGrid({
+  photos, numCols, gap, rowH, landscapeIds, children,
+}: {
+  photos: GalleryPhoto[];
+  numCols: number;
+  gap: number;
+  rowH: number;
+  landscapeIds: Set<string>;
+  children: (photo: GalleryPhoto) => React.ReactNode;
+}) {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: `repeat(${numCols}, 1fr)`,
+      gridAutoRows: `${rowH}px`,
+      gridAutoFlow: "row dense",
+      gap,
+    }}>
+      {photos.map((photo) => {
+        const isLandscape = landscapeIds.has(photo.id);
+        return (
+          <div key={photo.id} style={{
+            gridColumn: isLandscape ? "span 2" : "span 1",
+            gridRow: "span 2",
+            overflow: "hidden",
+            position: "relative",
+          }}>
+            {children(photo)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function DreamboxStep({ cx }: { cx: string }) {
@@ -75,7 +112,17 @@ export function DreamboxStep({ cx }: { cx: string }) {
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
   const [viewMode,      setViewMode]      = useState<ViewMode>("masonry");
   const [dreamboxOrder, setDreamboxOrder] = useState<string[]>(() => [...dreambox]);
+  const [landscapeIds,  setLandscapeIds]  = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
+
+  const handleOrientationDetect = useCallback((id: string) => {
+    setLandscapeIds(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     setDreamboxOrder((prev) => {
@@ -224,24 +271,35 @@ export function DreamboxStep({ cx }: { cx: string }) {
         </div>
 
       ) : viewMode === "large" ? (
-        // ── Velké náhledy: JS masonry 2 sloupce (1 na mobilu) ──
-        <MasonryGrid photos={filtered} numCols={isMobile ? 1 : 2} gap={isMobile ? 12 : 16}>
+        // ── Velké náhledy: SmartGrid 2 sloupce — landscape dostane plnou šíři ──
+        <SmartGrid
+          photos={filtered}
+          numCols={isMobile ? 2 : 2}
+          gap={isMobile ? 8 : 12}
+          rowH={isMobile ? 160 : 240}
+          landscapeIds={landscapeIds}
+        >
           {(photo) => (
             <NaturalTile key={photo.id} photo={photo}
               selected={dreambox.has(photo.id)} saving={savingId === photo.id}
-              onHeart={handleHeart} onZoom={setLightboxPhoto} />
+              onHeart={handleHeart} onZoom={setLightboxPhoto}
+              fillHeight onOrientationDetect={handleOrientationDetect} />
           )}
-        </MasonryGrid>
+        </SmartGrid>
 
       ) : isDreamboxView && dreambox.size > 0 ? (
-        // ── Dreambox: DnD na desktopu, plain na mobilu — JS masonry ──
+        // ── Dreambox: DnD na desktopu, SmartGrid na mobilu ──
         isMobile ? (
-          <MasonryGrid photos={dreamboxOrder.map(id => photos.find(ph => ph.id === id)).filter(Boolean) as GalleryPhoto[]} numCols={2} gap={8}>
+          <SmartGrid
+            photos={dreamboxOrder.map(id => photos.find(ph => ph.id === id)).filter(Boolean) as GalleryPhoto[]}
+            numCols={2} gap={8} rowH={150} landscapeIds={landscapeIds}
+          >
             {(photo) => (
               <NaturalTile key={photo.id} photo={photo} selected saving={savingId === photo.id}
-                onHeart={handleHeart} onZoom={setLightboxPhoto} />
+                onHeart={handleHeart} onZoom={setLightboxPhoto}
+                fillHeight onOrientationDetect={handleOrientationDetect} />
             )}
-          </MasonryGrid>
+          </SmartGrid>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={dreamboxOrder} strategy={rectSortingStrategy}>
@@ -256,14 +314,21 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Masonry výchozí: JS masonry, žádné CSS balancing, žádné ořezy ──
-        <MasonryGrid photos={filtered} numCols={isMobile ? 2 : 4} gap={isMobile ? 8 : 12}>
+        // ── Masonry výchozí: SmartGrid — landscape span 2 sloupce ──
+        <SmartGrid
+          photos={filtered}
+          numCols={isMobile ? 2 : 4}
+          gap={isMobile ? 6 : 10}
+          rowH={isMobile ? 150 : 190}
+          landscapeIds={landscapeIds}
+        >
           {(photo) => (
             <NaturalTile key={photo.id} photo={photo}
               selected={dreambox.has(photo.id)} saving={savingId === photo.id}
-              onHeart={handleHeart} onZoom={setLightboxPhoto} />
+              onHeart={handleHeart} onZoom={setLightboxPhoto}
+              fillHeight onOrientationDetect={handleOrientationDetect} />
           )}
-        </MasonryGrid>
+        </SmartGrid>
       )}
 
       {/* ── Dark floating Dreambox bar ── */}
@@ -414,9 +479,11 @@ interface TileBaseProps {
   saving: boolean;
   onHeart: (photo: GalleryPhoto, e: React.MouseEvent) => void;
   onZoom: (photo: GalleryPhoto) => void;
+  fillHeight?: boolean;
+  onOrientationDetect?: (id: string) => void;
 }
 
-function NaturalTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps) {
+function NaturalTile({ photo, selected, saving, onHeart, onZoom, fillHeight, onOrientationDetect }: TileBaseProps) {
   const [hovered, setHovered] = useState(false);
   const isActive = hovered || selected;
   return (
@@ -426,28 +493,40 @@ function NaturalTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps
       onClick={() => onZoom(photo)}
       style={{
         position: "relative", borderRadius: 0, overflow: "hidden",
+        width: "100%", height: fillHeight ? "100%" : "auto",
         cursor: "zoom-in", background: "#ddd0bc",
         outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 2,
-        transform: hovered ? "scale(1.012)" : "scale(1)",
-        transition: "transform 0.2s ease, outline 0.15s ease",
+        transition: "outline 0.15s ease",
       }}
     >
-      <img src={`${BASE}${photo.fullUrl}`} alt={`Foto ${photo.num}`} loading="lazy"
-        style={{ display: "block", width: "100%", height: "auto" }} />
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.22) 100%)" : "transparent", transition: "background 0.2s" }} />
+      <img
+        src={`${BASE}${photo.fullUrl}`}
+        alt={`Foto ${photo.num}`}
+        loading="lazy"
+        onLoad={onOrientationDetect ? (e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth > img.naturalHeight) onOrientationDetect(photo.id);
+        } : undefined}
+        style={{
+          display: "block", width: "100%",
+          height: fillHeight ? "100%" : "auto",
+          objectFit: fillHeight ? "cover" : undefined,
+        }}
+      />
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
       {photo.isSuggested && (
-        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", borderRadius: 0, background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
           <Sparkles size={9} strokeWidth={2} />Doporučené
         </div>
       )}
       <button onClick={(e) => onHeart(photo, e)} disabled={saving} style={{
         all: "unset", cursor: "pointer", position: "absolute", top: 8, right: 8,
-        width: 36, height: 36, borderRadius: "50%",
+        width: 34, height: 34,
         background: selected ? "var(--fp-accent)" : "rgba(255,255,255,0.88)",
         backdropFilter: "blur(8px)", color: selected ? "#fff" : "var(--fp-ink)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.2)", opacity: isActive ? 1 : 0.8,
+        opacity: isActive ? 1 : 0.75,
         transition: "all 0.18s ease",
       }}>
         <Heart size={16} strokeWidth={2} fill={selected ? "#fff" : "none"} />
