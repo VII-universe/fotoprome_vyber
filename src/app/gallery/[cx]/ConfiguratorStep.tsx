@@ -178,10 +178,13 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
       </div>
 
       {/* ── Photo filmstrip ── */}
-      <div style={{ border: "1px solid var(--fp-line)", background: "var(--fp-surface)", marginBottom: -1 }}>
+      <div style={{ background: "var(--fp-ink)", borderBottom: "1px solid var(--fp-line)" }}>
         <div style={{ display: "flex", alignItems: "stretch" }}>
           {/* Scrollable thumbnails */}
-          <div style={{ flex: 1, display: "flex", overflowX: "auto", background: "var(--fp-bg)" }}>
+          <div style={{
+            flex: 1, display: "flex", gap: 3, overflowX: "auto",
+            padding: "10px 12px", alignItems: "center",
+          }}>
             {dreamboxPhotos.map((p, i) => {
               const isActive = p.id === selectedPid;
               const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
@@ -191,32 +194,25 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   key={p.id}
                   onClick={() => selectPhoto(p.id)}
                   style={{
-                    all: "unset", cursor: "pointer", flexShrink: 0,
-                    position: "relative", width: 80, height: 80,
-                    borderRight: "1px solid var(--fp-line)",
-                    borderBottom: isActive ? "3px solid var(--fp-accent)" : "3px solid transparent",
-                    overflow: "hidden", background: "#e8d8c8", boxSizing: "border-box",
-                    transition: "border-color 0.15s",
+                    all: "unset", cursor: "pointer", flexShrink: 0, display: "block",
+                    position: "relative", height: 80, overflow: "hidden",
+                    outline: isActive ? "2px solid #fff" : "2px solid transparent",
+                    outlineOffset: "2px",
+                    opacity: isActive ? 1 : 0.45,
+                    transition: "opacity 0.2s, outline-color 0.15s",
                   }}
                 >
                   <img
                     src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
                     alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    style={{ height: "100%", width: "auto", display: "block" }}
                   />
-                  <div style={{
-                    position: "absolute", bottom: 4, left: 4,
-                    padding: "1px 5px",
-                    background: isActive ? "var(--fp-accent)" : "rgba(28,26,23,0.6)",
-                    color: "#fff", fontSize: 9, fontWeight: 700,
-                    fontFamily: "ui-monospace, monospace", lineHeight: 1.5,
-                  }}>{String(i + 1).padStart(2, "0")}</div>
                   {lineCount > 0 && (
                     <div style={{
-                      position: "absolute", top: 4, right: 4,
-                      width: 7, height: 7,
+                      position: "absolute", bottom: 4, right: 4,
+                      width: 6, height: 6,
                       background: "var(--fp-accent)",
-                      boxShadow: "0 0 0 1.5px var(--fp-surface)",
+                      boxShadow: "0 0 0 1.5px var(--fp-ink)",
                     }} />
                   )}
                 </button>
@@ -226,9 +222,9 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
           {/* Actions panel */}
           <div style={{
             display: "flex", flexDirection: "column", justifyContent: "center",
-            alignItems: "center", gap: 6, padding: "0 18px",
-            borderLeft: "1px solid var(--fp-line)",
-            background: "var(--fp-surface)", flexShrink: 0, minWidth: 100,
+            alignItems: "center", gap: 8, padding: "0 22px",
+            borderLeft: "1px solid rgba(255,255,255,0.1)",
+            flexShrink: 0, minWidth: 110,
           }}>
             <button
               onClick={() => {
@@ -240,19 +236,20 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
               }}
               style={{
                 all: "unset", cursor: "pointer",
-                padding: "7px 14px", border: "1px solid var(--fp-line)",
-                background: "var(--fp-bg)",
-                fontSize: 11, fontWeight: 600, letterSpacing: "0.04em",
-                color: "var(--fp-ink)", textAlign: "center", whiteSpace: "nowrap",
+                padding: "7px 14px",
+                border: "1px solid rgba(255,255,255,0.22)",
+                background: "transparent",
+                fontSize: 10.5, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase",
+                color: "rgba(255,255,255,0.8)", textAlign: "center", whiteSpace: "nowrap",
                 transition: "all 0.15s",
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-ink)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-bg)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-bg)"; (e.currentTarget as HTMLElement).style.color = "var(--fp-ink)"; }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
             >
               Aplikovat<br />na vše
             </button>
-            <div style={{ fontSize: 9.5, color: "var(--fp-ink-4)", fontFamily: "ui-monospace, monospace" }}>
-              {dreamboxPhotos.length} fotek
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: "ui-monospace, monospace", letterSpacing: "0.1em" }}>
+              {dreamboxPhotos.length} FOTEK
             </div>
           </div>
         </div>
