@@ -89,23 +89,69 @@ export function SummaryStep({ cx }: { cx: string }) {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 360px", gap: 24, alignItems: "start" }}>
         {/* Left: items table */}
         <div>
-          <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", borderRadius: 0, overflow: "hidden" }}>
-            {/* Table header */}
-            <div style={{
-              padding: "10px 16px 10px 20px", borderBottom: "1px solid var(--fp-line)",
-              display: "grid", gridTemplateColumns: "200px 1fr 60px 80px",
-              fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)",
-              textTransform: "uppercase", letterSpacing: "0.14em",
-            }}>
-              <span>Fotografie</span><span>Formát</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
-            </div>
+          <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", overflow: "hidden" }}>
+            {/* Table header — desktop only */}
+            {!isMobile && (
+              <div style={{
+                padding: "10px 16px 10px 20px", borderBottom: "1px solid var(--fp-line)",
+                display: "grid", gridTemplateColumns: "200px 1fr 60px 80px",
+                fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)",
+                textTransform: "uppercase", letterSpacing: "0.14em",
+              }}>
+                <span>Fotografie</span><span>Formát</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
+              </div>
+            )}
 
             {dreamboxPhotos.map((p) => {
               const c = configs[p.id];
               const prints = c?.prints?.filter(l => l.qty > 0) ?? [];
+
+              if (isMobile) {
+                /* ── Mobile: stacked card per photo ── */
+                return (
+                  <div key={p.id} style={{ borderBottom: "1px solid var(--fp-line)" }}>
+                    {/* Photo header */}
+                    <div style={{
+                      display: "flex", gap: 12, alignItems: "center",
+                      padding: "12px 16px",
+                      borderBottom: prints.length > 0 ? "1px solid var(--fp-line)" : "none",
+                      background: "var(--fp-bg)",
+                    }}>
+                      <div style={{ width: 44, height: 44, flexShrink: 0, overflow: "hidden", background: "#e8d8c8" }}>
+                        <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
+                        {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}"</div>}
+                        {prints.length === 0 && <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 2 }}>Nenakonfigurováno</div>}
+                      </div>
+                    </div>
+                    {/* Print lines */}
+                    {prints.map((line, li) => {
+                      const price = (PRICE_MAP[line.size] ?? 0) * line.qty;
+                      return (
+                        <div key={li} style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "10px 16px",
+                          borderBottom: li < prints.length - 1 ? "1px solid var(--fp-line)" : "none",
+                          background: li % 2 === 0 ? "transparent" : "rgba(26,23,20,0.025)",
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>{SIZE_LABELS[line.size]}</span>
+                            <span style={{ fontSize: 12, color: "var(--fp-ink-3)", marginLeft: 8 }}>{COLOR_LABELS[line.color]}</span>
+                            <span style={{ fontSize: 12, color: "var(--fp-ink-4)", marginLeft: 8 }}>×{line.qty}</span>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, flexShrink: 0 }}>{price.toLocaleString("cs-CZ")} Kč</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              /* ── Desktop: side-by-side ── */
               return (
                 <div key={p.id} style={{ display: "flex", borderBottom: "1px solid var(--fp-line)" }}>
-                  {/* Left: photo identity — spans all print lines */}
                   <div style={{
                     width: 200, flexShrink: 0, padding: "14px 16px",
                     display: "flex", gap: 12, alignItems: "flex-start",
@@ -116,16 +162,10 @@ export function SummaryStep({ cx }: { cx: string }) {
                     </div>
                     <div>
                       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
-                      {prints.length === 0 && (
-                        <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 3 }}>Nenakonfigurováno</div>
-                      )}
-                      {c?.notes && (
-                        <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 4, fontStyle: "italic", lineHeight: 1.4 }}>„{c.notes}"</div>
-                      )}
+                      {prints.length === 0 && <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 3 }}>Nenakonfigurováno</div>}
+                      {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 4, fontStyle: "italic", lineHeight: 1.4 }}>„{c.notes}"</div>}
                     </div>
                   </div>
-
-                  {/* Right: print lines */}
                   <div style={{ flex: 1 }}>
                     {prints.length === 0 ? (
                       <div style={{ padding: "14px 16px", opacity: 0.4, fontSize: 13, color: "var(--fp-ink-3)" }}>—</div>
