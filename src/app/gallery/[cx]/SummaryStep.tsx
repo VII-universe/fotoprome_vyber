@@ -92,67 +92,64 @@ export function SummaryStep({ cx }: { cx: string }) {
           <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", borderRadius: 0, overflow: "hidden" }}>
             {/* Table header */}
             <div style={{
-              padding: "12px 20px", borderBottom: "1px solid var(--fp-line)",
-              display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
+              padding: "10px 16px 10px 20px", borderBottom: "1px solid var(--fp-line)",
+              display: "grid", gridTemplateColumns: "200px 1fr 60px 80px",
               fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)",
               textTransform: "uppercase", letterSpacing: "0.14em",
             }}>
-              <span>Náhled</span><span>Fotografie</span><span>Formát</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
+              <span>Fotografie</span><span>Formát</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
             </div>
+
             {dreamboxPhotos.map((p) => {
               const c = configs[p.id];
               const prints = c?.prints?.filter(l => l.qty > 0) ?? [];
-              if (prints.length === 0) {
-                // Photo with no configured prints — show placeholder row
-                return (
-                  <div key={p.id} style={{
-                    padding: "14px 20px", borderBottom: "1px solid var(--fp-line)",
-                    display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
-                    alignItems: "center", gap: 12, opacity: 0.5,
+              return (
+                <div key={p.id} style={{ display: "flex", borderBottom: "1px solid var(--fp-line)" }}>
+                  {/* Left: photo identity — spans all print lines */}
+                  <div style={{
+                    width: 200, flexShrink: 0, padding: "14px 16px",
+                    display: "flex", gap: 12, alignItems: "flex-start",
+                    borderRight: "1px solid var(--fp-line)",
                   }}>
-                    <div style={{ width: 50, height: 50, overflow: "hidden", background: "#e8d8c8" }}>
+                    <div style={{ width: 50, height: 50, flexShrink: 0, overflow: "hidden", background: "#e8d8c8" }}>
                       <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div>
                       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
-                      <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 2 }}>Nenakonfigurováno</div>
+                      {prints.length === 0 && (
+                        <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 3 }}>Nenakonfigurováno</div>
+                      )}
+                      {c?.notes && (
+                        <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 4, fontStyle: "italic", lineHeight: 1.4 }}>„{c.notes}"</div>
+                      )}
                     </div>
-                    <span /><span /><span />
                   </div>
-                );
-              }
-              return prints.map((line, li) => {
-                const price = (PRICE_MAP[line.size] ?? 0) * line.qty;
-                return (
-                  <div key={`${p.id}-${li}`} style={{
-                    padding: li === 0 ? "14px 20px 10px" : "4px 20px 10px",
-                    borderBottom: li === prints.length - 1 ? "1px solid var(--fp-line)" : "none",
-                    display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
-                    alignItems: "center", gap: 12,
-                  }}>
-                    {/* Thumbnail — only on first line of each photo */}
-                    {li === 0 ? (
-                      <div style={{ width: 50, height: 50, overflow: "hidden", background: "#e8d8c8", gridRow: `span ${prints.length}` }}>
-                        <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      </div>
-                    ) : <span />}
-                    {/* Photo info — only on first line */}
-                    {li === 0 ? (
-                      <div>
-                        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
-                        {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}"</div>}
-                      </div>
-                    ) : <span />}
-                    {/* Format */}
-                    <div style={{ fontSize: 13 }}>
-                      <div style={{ fontWeight: 500 }}>{SIZE_LABELS[line.size]}</div>
-                      <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 1 }}>{COLOR_LABELS[line.color]}</div>
-                    </div>
-                    <div style={{ fontSize: 13.5, fontWeight: 500 }}>×{line.qty}</div>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, textAlign: "right" }}>{price.toLocaleString("cs-CZ")} Kč</div>
+
+                  {/* Right: print lines */}
+                  <div style={{ flex: 1 }}>
+                    {prints.length === 0 ? (
+                      <div style={{ padding: "14px 16px", opacity: 0.4, fontSize: 13, color: "var(--fp-ink-3)" }}>—</div>
+                    ) : prints.map((line, li) => {
+                      const price = (PRICE_MAP[line.size] ?? 0) * line.qty;
+                      return (
+                        <div key={li} style={{
+                          display: "grid", gridTemplateColumns: "1fr 60px 80px",
+                          alignItems: "center", padding: "11px 16px",
+                          borderBottom: li < prints.length - 1 ? "1px solid var(--fp-line)" : "none",
+                          background: li % 2 === 0 ? "transparent" : "rgba(26,23,20,0.025)",
+                        }}>
+                          <div>
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>{SIZE_LABELS[line.size]}</span>
+                            <span style={{ fontSize: 12, color: "var(--fp-ink-3)", marginLeft: 8 }}>{COLOR_LABELS[line.color]}</span>
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>×{line.qty}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>{price.toLocaleString("cs-CZ")} Kč</div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              });
+                </div>
+              );
             })}
           </div>
 
