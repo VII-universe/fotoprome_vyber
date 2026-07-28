@@ -215,7 +215,7 @@ export function SummaryStep({ cx }: { cx: string }) {
             <div style={{ marginTop: 32 }}>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
                 <h2 style={{ margin: 0, fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, fontSize: 22 }}>Doplňkové produkty</h2>
-                <button onClick={() => setStep(3)} style={{ all: "unset", cursor: "pointer", fontSize: 12, color: "var(--fp-accent)", fontWeight: 500 }}>
+                <button onClick={() => setStep(2)} style={{ all: "unset", cursor: "pointer", fontSize: 12, color: "var(--fp-accent)", fontWeight: 500 }}>
                   Upravit
                 </button>
               </div>
@@ -320,7 +320,7 @@ export function SummaryStep({ cx }: { cx: string }) {
 
       {/* Back button */}
       <div style={{ marginTop: 24 }}>
-        <button onClick={() => setStep(3)} style={{
+        <button onClick={() => setStep(2)} style={{
           all: "unset", cursor: "pointer", height: 40, padding: "0 16px", borderRadius: 0,
           border: "1px solid var(--fp-line)", fontSize: 13.5, fontWeight: 500,
           display: "flex", alignItems: "center", gap: 6, color: "var(--fp-ink)",

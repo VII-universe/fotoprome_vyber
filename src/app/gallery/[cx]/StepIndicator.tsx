@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 const STEPS = [
   { id: 1 as GalleryStep, label: "Výběr fotek" },
   { id: 2 as GalleryStep, label: "Parametry" },
-  { id: 3 as GalleryStep, label: "Doplňky" },
+  // { id: 3 as GalleryStep, label: "Doplňky" }, // skryt — reaktivovat spolu s CrossSellStep
   { id: 4 as GalleryStep, label: "Rekapitulace" },
 ] as const;
 

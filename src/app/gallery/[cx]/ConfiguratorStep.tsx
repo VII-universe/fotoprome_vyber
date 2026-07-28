@@ -144,7 +144,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         }
       }
       toast.success("Konfigurace uložena");
-      setStep(3);
+      setStep(4);
     } catch {
       toast.error("Nepodařilo se uložit");
     } finally {

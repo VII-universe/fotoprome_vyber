@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { StepIndicator } from "./StepIndicator";
 import { DreamboxStep } from "./DreamboxStep";
 import { ConfiguratorStep } from "./ConfiguratorStep";
-import { CrossSellStep } from "./CrossSellStep";
+// import { CrossSellStep } from "./CrossSellStep"; // krok 3 doplňků — skryt, zakomentovat pro reaktivaci
 import { SummaryStep } from "./SummaryStep";
 import { Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -55,7 +55,7 @@ export function GalleryClient({ cx }: { cx: string }) {
         <div style={{ marginTop: 24 }}>
           {step === 1 && <DreamboxStep cx={cx} />}
           {step === 2 && <ConfiguratorStep cx={cx} />}
-          {step === 3 && <CrossSellStep cx={cx} />}
+          {/* {step === 3 && <CrossSellStep cx={cx} />} */}
           {step === 4 && <SummaryStep cx={cx} />}
         </div>
       </div>
