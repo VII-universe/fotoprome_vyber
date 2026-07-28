@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGalleryStore, SIZE_LABELS, COLOR_LABELS, RETOUCH_LABELS, ADDON_PRODUCTS } from "@/lib/gallery-store";
+import { useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, FrameIcon, Printer, BookOpen } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
@@ -92,43 +92,67 @@ export function SummaryStep({ cx }: { cx: string }) {
           <div style={{ background: "var(--fp-surface)", border: "1px solid var(--fp-line)", borderRadius: 0, overflow: "hidden" }}>
             {/* Table header */}
             <div style={{
-              padding: "14px 20px", borderBottom: "1px solid var(--fp-line)",
-              display: "grid", gridTemplateColumns: "56px 1fr 110px 80px 80px",
+              padding: "12px 20px", borderBottom: "1px solid var(--fp-line)",
+              display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
               fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)",
               textTransform: "uppercase", letterSpacing: "0.14em",
             }}>
-              <span>Náhled</span><span>Fotografie</span><span>Velikost</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
+              <span>Náhled</span><span>Fotografie</span><span>Formát</span><span>Počet</span><span style={{ textAlign: "right" }}>Cena</span>
             </div>
             {dreamboxPhotos.map((p) => {
               const c = configs[p.id];
-              const size = c?.prints[0]?.size ?? "S";
-              const qty = c?.prints[0]?.qty ?? 1;
-              const color = c?.prints[0]?.color ?? "color";
-              const retouch = c?.retouchLevel ?? "none";
-              const price = (PRICE_MAP[size] ?? 0) * qty;
-              return (
-                <div key={p.id} style={{
-                  padding: "14px 20px", borderBottom: "1px solid var(--fp-line)",
-                  display: "grid", gridTemplateColumns: "56px 1fr 110px 80px 80px",
-                  alignItems: "center", gap: 12,
-                }}>
-                  <div style={{ width: 50, height: 50, borderRadius: 0, overflow: "hidden", background: "#e8d8c8" }}>
-                    <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
-                    <div style={{ fontSize: 12.5, color: "var(--fp-ink-2)", marginTop: 2 }}>
-                      {COLOR_LABELS[color]} · retuš {RETOUCH_LABELS[retouch].toLowerCase()}
+              const prints = c?.prints?.filter(l => l.qty > 0) ?? [];
+              if (prints.length === 0) {
+                // Photo with no configured prints — show placeholder row
+                return (
+                  <div key={p.id} style={{
+                    padding: "14px 20px", borderBottom: "1px solid var(--fp-line)",
+                    display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
+                    alignItems: "center", gap: 12, opacity: 0.5,
+                  }}>
+                    <div style={{ width: 50, height: 50, overflow: "hidden", background: "#e8d8c8" }}>
+                      <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
-                    {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}"</div>}
+                    <div>
+                      <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
+                      <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 2 }}>Nenakonfigurováno</div>
+                    </div>
+                    <span /><span /><span />
                   </div>
-                  <div style={{ fontSize: 13 }}>
-                    <div style={{ fontWeight: 500 }}>{SIZE_LABELS[size]}</div>
+                );
+              }
+              return prints.map((line, li) => {
+                const price = (PRICE_MAP[line.size] ?? 0) * line.qty;
+                return (
+                  <div key={`${p.id}-${li}`} style={{
+                    padding: li === 0 ? "14px 20px 10px" : "4px 20px 10px",
+                    borderBottom: li === prints.length - 1 ? "1px solid var(--fp-line)" : "none",
+                    display: "grid", gridTemplateColumns: "56px 1fr 120px 60px 80px",
+                    alignItems: "center", gap: 12,
+                  }}>
+                    {/* Thumbnail — only on first line of each photo */}
+                    {li === 0 ? (
+                      <div style={{ width: 50, height: 50, overflow: "hidden", background: "#e8d8c8", gridRow: `span ${prints.length}` }}>
+                        <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    ) : <span />}
+                    {/* Photo info — only on first line */}
+                    {li === 0 ? (
+                      <div>
+                        <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
+                        {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}"</div>}
+                      </div>
+                    ) : <span />}
+                    {/* Format */}
+                    <div style={{ fontSize: 13 }}>
+                      <div style={{ fontWeight: 500 }}>{SIZE_LABELS[line.size]}</div>
+                      <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 1 }}>{COLOR_LABELS[line.color]}</div>
+                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 500 }}>×{line.qty}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, textAlign: "right" }}>{price.toLocaleString("cs-CZ")} Kč</div>
                   </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500 }}>×{qty}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, textAlign: "right" }}>{price.toLocaleString("cs-CZ")} Kč</div>
-                </div>
-              );
+                );
+              });
             })}
           </div>
 
