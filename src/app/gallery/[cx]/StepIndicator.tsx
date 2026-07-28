@@ -36,7 +36,7 @@ export function StepIndicator({ currentStep }: { currentStep: GalleryStep }) {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 11, fontWeight: 600,
               }}>
-                {isDone ? <Check size={11} strokeWidth={2.5} /> : step.id}
+                {isDone ? <Check size={11} strokeWidth={2.5} /> : i + 1}
               </div>
               <span style={{
                 fontSize: 12.5, fontWeight: 500,

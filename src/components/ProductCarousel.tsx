@@ -40,36 +40,41 @@ export function ProductCarousel({ jobs }: Props) {
 
   return (
     <div>
-      {/* Section header */}
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-        <div>
-          <h2 style={{
-            margin: 0,
-            fontFamily: '"Instrument Serif", Georgia, serif',
-            fontWeight: 400, fontSize: 22, color: "var(--fp-ink)",
-          }}>
-            Vytvořte <em>vzpomínku</em>
-          </h2>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--fp-ink-3)" }}>
-            Z vašich fotek můžeme vytvořit krásné produkty — kdykoliv zpětně.
-          </p>
-        </div>
-        <div className="hidden md:flex" style={{ gap: 6 }}>
-          <button onClick={() => scroll(-1)} style={{
-            all: "unset", cursor: "pointer",
-            width: 32, height: 32, borderRadius: "50%",
-            border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--fp-ink-3)",
-          }}><ChevronLeft size={16} /></button>
-          <button onClick={() => scroll(1)} style={{
-            all: "unset", cursor: "pointer",
-            width: 32, height: 32, borderRadius: "50%",
-            border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "var(--fp-ink-3)",
-          }}><ChevronRight size={16} /></button>
-        </div>
+      {/* Section intro — separated from products */}
+      <div style={{
+        padding: "28px 0 24px",
+        borderTop: "1px solid var(--fp-line)",
+        borderBottom: "1px solid var(--fp-line)",
+        marginBottom: 28,
+      }}>
+        <h2 style={{
+          margin: "0 0 6px",
+          fontFamily: '"Instrument Serif", Georgia, serif',
+          fontWeight: 400, fontSize: 26, color: "var(--fp-ink)",
+        }}>
+          Vytvořte <em>vzpomínku</em>
+        </h2>
+        <p style={{ margin: 0, fontSize: 13.5, color: "var(--fp-ink-3)", maxWidth: 480, lineHeight: 1.6 }}>
+          Z vašich fotek můžeme vytvořit krásné produkty — kdykoliv zpětně.
+        </p>
+      </div>
+
+      {/* Carousel header — navigation arrows */}
+      <div className="hidden md:flex" style={{ justifyContent: "flex-end", gap: 6, marginBottom: 12 }}>
+        <button onClick={() => scroll(-1)} style={{
+          all: "unset", cursor: "pointer",
+          width: 32, height: 32,
+          border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--fp-ink-3)",
+        }}><ChevronLeft size={16} /></button>
+        <button onClick={() => scroll(1)} style={{
+          all: "unset", cursor: "pointer",
+          width: 32, height: 32,
+          border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--fp-ink-3)",
+        }}><ChevronRight size={16} /></button>
       </div>
 
       {/* Carousel */}
