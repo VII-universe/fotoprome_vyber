@@ -9,14 +9,18 @@ import { DreamboxStep } from "./DreamboxStep";
 import { ConfiguratorStep } from "./ConfiguratorStep";
 // import { CrossSellStep } from "./CrossSellStep"; // krok 3 doplňků — skryt, zakomentovat pro reaktivaci
 import { SummaryStep } from "./SummaryStep";
-import { Loader2 } from "lucide-react";
+import { VyberPanel } from "./VyberPanel";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function GalleryClient({ cx }: { cx: string }) {
-  const { step, setJobId, setPhotos } = useGalleryStore();
+  const { step, setJobId, setPhotos, dreambox } = useGalleryStore();
   const [loading, setLoading] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const initialized = useRef(false);
   const isMobile = useIsMobile();
+
+  const dreamboxCount = dreambox.size;
 
   useEffect(() => {
     if (initialized.current) return;
@@ -40,8 +44,48 @@ export function GalleryClient({ cx }: { cx: string }) {
     );
   }
 
+  const vyberButton = (
+    <button
+      onClick={() => setPanelOpen(true)}
+      style={{
+        all: "unset", cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "6px 14px",
+        border: "1px solid var(--fp-line)",
+        fontSize: 12, fontWeight: 600,
+        letterSpacing: "0.05em", textTransform: "uppercase",
+        color: "var(--fp-ink)",
+        background: dreamboxCount > 0 ? "var(--fp-ink)" : "transparent",
+        transition: "all 0.15s",
+      }}
+      onMouseEnter={e => {
+        if (dreamboxCount === 0) (e.currentTarget as HTMLButtonElement).style.background = "var(--fp-surface)";
+      }}
+      onMouseLeave={e => {
+        if (dreamboxCount === 0) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+      }}
+    >
+      <ShoppingBag size={13} color={dreamboxCount > 0 ? "#fff" : undefined} />
+      <span style={{ color: dreamboxCount > 0 ? "#fff" : undefined }}>Výběr</span>
+      {dreamboxCount > 0 && (
+        <span style={{
+          background: "rgba(255,255,255,0.25)",
+          color: "#fff",
+          fontSize: 10, fontWeight: 700,
+          padding: "1px 7px",
+          borderRadius: 20,
+          letterSpacing: 0,
+          fontFamily: "ui-monospace, monospace",
+        }}>
+          {dreamboxCount}
+        </span>
+      )}
+    </button>
+  );
+
   return (
-    <AppShell>
+    <AppShell navExtra={vyberButton}>
+      <VyberPanel open={panelOpen} onClose={() => setPanelOpen(false)} />
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: isMobile ? "16px" : "24px 48px" }}>
         {/* Breadcrumb */}
         <div style={{ fontSize: 12, color: "var(--fp-ink-3)", marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>

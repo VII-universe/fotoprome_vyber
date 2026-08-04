@@ -85,6 +85,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [menuPid, setMenuPid] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [removing, setRemoving] = useState(false);
@@ -153,13 +154,19 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
           cx,
         }),
       });
-      const { token } = await res.json();
-      const url = `${window.location.origin}/share/${token}`;
-      await navigator.clipboard.writeText(url);
-      setShareToast(true);
-      setTimeout(() => setShareToast(false), 3000);
-    } catch {
-      toast.error("Nepodařilo se vytvořit odkaz");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "API error");
+      const url = `${window.location.origin}/share/${data.token}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 3000);
+      } catch {
+        // clipboard blocked (HTTP / permission) — show URL in modal
+        setShareUrl(url);
+      }
+    } catch (err) {
+      toast.error(`Nepodařilo se vytvořit odkaz: ${err instanceof Error ? err.message : "chyba"}`);
     } finally {
       setSharing(false);
     }
@@ -244,6 +251,74 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
   return (
     <div style={{ paddingBottom: 100 }}>
+      {/* Share URL modal (clipboard blocked on HTTP) */}
+      {shareUrl && (
+        <div
+          onClick={() => setShareUrl(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(0,0,0,0.55)", display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 12, padding: "28px 24px",
+              maxWidth: 480, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--fp-ink)", marginBottom: 8 }}>
+              Odkaz ke sdílení
+            </div>
+            <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginBottom: 14 }}>
+              Zkopírujte odkaz níže a sdílejte ho s kýmkoliv:
+            </div>
+            <div style={{
+              display: "flex", gap: 8, alignItems: "center",
+              background: "var(--fp-surface)", borderRadius: 8, padding: "10px 14px",
+              border: "1px solid var(--fp-border)",
+            }}>
+              <span style={{
+                flex: 1, fontSize: 12, fontFamily: "ui-monospace, monospace",
+                color: "var(--fp-ink)", wordBreak: "break-all",
+              }}>
+                {shareUrl}
+              </span>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                  } catch {
+                    // last resort: select text
+                  }
+                  setShareUrl(null);
+                  setShareToast(true);
+                  setTimeout(() => setShareToast(false), 3000);
+                }}
+                style={{
+                  all: "unset", cursor: "pointer", flexShrink: 0,
+                  background: "var(--fp-ink)", color: "#fff",
+                  fontSize: 11, fontWeight: 600, padding: "6px 14px", borderRadius: 6,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Kopírovat
+              </button>
+            </div>
+            <button
+              onClick={() => setShareUrl(null)}
+              style={{
+                all: "unset", cursor: "pointer", marginTop: 14, display: "block",
+                fontSize: 11, color: "var(--fp-ink-3)",
+              }}
+            >
+              Zavřít
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ marginBottom: 20, display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>

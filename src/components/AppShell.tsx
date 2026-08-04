@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 interface AppShellProps {
   children: React.ReactNode;
   userName?: string;
+  navExtra?: React.ReactNode;
 }
 
 const NAV = [
@@ -16,7 +17,7 @@ const NAV = [
   { id: "orders",    label: "Objednávky", href: "/dashboard" },
 ];
 
-export function AppShell({ children, userName }: AppShellProps) {
+export function AppShell({ children, userName, navExtra }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -80,8 +81,9 @@ export function AppShell({ children, userName }: AppShellProps) {
           </nav>
         </div>
 
-        {/* Right: avatar */}
+        {/* Right: navExtra + avatar */}
         <div className="hidden md:flex" style={{ alignItems: "center", gap: 14 }}>
+          {navExtra}
           <div style={{
             display: "flex",
             alignItems: "center",
