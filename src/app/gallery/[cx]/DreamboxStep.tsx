@@ -599,146 +599,141 @@ export function DreamboxStep({ cx }: { cx: string }) {
         );
       })()}
 
-      {/* ── Dark floating Dreambox bar ── */}
+      {/* ── Floating bottom bar ── */}
       {dreambox.size > 0 && (
         <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          paddingTop: 0,
-          paddingLeft: isMobile ? 12 : 48,
-          paddingRight: isMobile ? 12 : 48,
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          zIndex: 30,
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30,
+          background: "rgba(22,20,18,0.97)",
+          backdropFilter: "blur(24px)",
+          borderTop: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 -12px 48px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.06)",
         }}>
           {isMobile ? (
-            /* ── Mobile bar: compact 2-row layout ── */
-            <div style={{
-              maxWidth: 600, margin: "0 auto", marginBottom: 12,
-              borderRadius: 0, background: "rgba(28,26,23,0.97)", backdropFilter: "blur(20px)",
-              boxShadow: "0 -4px 24px rgba(28,26,23,0.25)",
-              overflow: "hidden",
-            }}>
-              {/* Top row: heart icon + count + package status + mini thumbs */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 10px" }}>
-                <div style={{
-                  width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-                  background: "var(--fp-accent)", color: "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Heart size={14} strokeWidth={2} fill="#fff" />
-                </div>
-                <div style={{ color: "#fff", flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700 }}>Vybráno {dreambox.size}</span>
+            /* ── Mobile ── */
+            <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Thumbs */}
+              <div style={{ display: "flex", flexShrink: 0 }}>
+                {[...dreambox].slice(0, 3).map((id, i) => {
+                  const p = photos.find((ph) => ph.id === id);
+                  return p ? (
+                    <div key={id} style={{ width: 34, height: 34, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid rgba(22,20,18,0.97)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  ) : null;
+                })}
+                {dreambox.size > 3 && (
+                  <div style={{ width: 34, height: 34, marginLeft: -8, background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, border: "2px solid rgba(22,20,18,0.97)" }}>
+                    +{dreambox.size - 3}
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1, color: "#fff" }}>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   {selectedPackageId ? (() => {
                     const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
                     const effective = pkg.includedPhotos + usedCredits;
                     const rem = effective - dreambox.size;
-                    return rem >= 0
-                      ? <span style={{ fontSize: 11, opacity: 0.65, marginLeft: 8 }}>· {rem === 0 ? "balíček plný" : `zbývá ${rem} z ${effective}`}</span>
-                      : <span style={{ fontSize: 11, color: "#f4a261", marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>;
-                  })() : <span style={{ fontSize: 12, opacity: 0.5, marginLeft: 6 }}>/ {photos.length}</span>}
+                    return rem >= 0 ? `Balíček ${pkg.name} · zbývá ${rem}` : `Balíček ${pkg.name} · ${-rem} navíc`;
+                  })() : `z ${photos.length} fotek`}
                 </div>
-                {/* Max 3 mini thumbs */}
-                <div style={{ display: "flex" }}>
-                  {[...dreambox].slice(0, 3).map((id, i) => {
-                    const p = photos.find((ph) => ph.id === id);
-                    return p ? (
-                      <div key={id} style={{
-                        width: 28, height: 28, borderRadius: 0, overflow: "hidden",
-                        marginLeft: i === 0 ? 0 : -6, border: "1.5px solid #1c1a17",
-                      }}>
-                        <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      </div>
-                    ) : null;
-                  })}
-                  {dreambox.size > 3 && (
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 0, marginLeft: -6,
-                      background: "rgba(255,255,255,0.15)", color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 10, fontWeight: 600, border: "1.5px solid #1c1a17",
-                    }}>+{dreambox.size - 3}</div>
-                  )}
+                <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22, lineHeight: 1.1 }}>
+                  {dreambox.size} {dreambox.size === 1 ? "fotka" : dreambox.size < 5 ? "fotky" : "fotek"}
                 </div>
               </div>
-              {/* Bottom row: full-width CTA button */}
-              <div style={{ padding: "0 10px 10px" }}>
-                <button onClick={() => setStep(2)} style={{
-                  all: "unset", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  width: "100%", boxSizing: "border-box",
-                  height: 48, borderRadius: 0,
-                  background: "#fff", color: "var(--fp-ink)", border: "1px solid var(--fp-line)",
-                  fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-                }}>
-                  Konfigurovat výběr <ArrowRight size={16} strokeWidth={2.5} />
-                </button>
-              </div>
+
+              {/* CTA */}
+              <button onClick={() => setStep(2)} style={{
+                all: "unset", cursor: "pointer",
+                height: 42, padding: "0 18px",
+                background: "var(--fp-accent)", color: "#fff",
+                fontSize: 13, fontWeight: 700,
+                display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+              }}>
+                Pokračovat <ArrowRight size={15} strokeWidth={2.5} />
+              </button>
             </div>
           ) : (
-            /* ── Desktop bar: original wide layout ── */
+            /* ── Desktop ── */
             <div style={{
-              maxWidth: 1200, margin: "0 auto", marginBottom: 24, padding: 8,
-              borderRadius: 0, background: "rgba(28,26,23,0.95)", backdropFilter: "blur(20px)",
-              display: "flex", alignItems: "center", gap: 14,
-              boxShadow: "0 18px 40px rgba(28,26,23,0.2)",
+              maxWidth: 1200, margin: "0 auto",
+              padding: "0 48px",
+              height: 72,
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 8px 0 14px", flex: 1 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--fp-accent)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Heart size={16} strokeWidth={2} fill="#fff" />
+              {/* Left: count + package info */}
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff" }}>
+                  <Heart size={16} strokeWidth={2} fill="var(--fp-accent)" color="var(--fp-accent)" />
+                  <span style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 26 }}>
+                    {dreambox.size}
+                  </span>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", paddingTop: 2 }}>
+                    {dreambox.size === 1 ? "fotka" : dreambox.size < 5 ? "fotky" : "fotek"}
+                  </span>
                 </div>
-                <div style={{ color: "#fff" }}>
-                  {selectedPackageId ? (() => {
-                    const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
-                    const effective = pkg.includedPhotos + usedCredits;
-                    const rem = effective - dreambox.size;
-                    return (
-                      <>
-                        <div style={{ fontSize: 11, opacity: 0.6 }}>
-                          Balíček {pkg.name} · {pkg.includedPhotos} fotek{usedCredits > 0 ? ` +${usedCredits} kredity` : ""}
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 600 }}>
-                          {dreambox.size} vybráno
-                          {rem >= 0
-                            ? <span style={{ opacity: 0.6, fontWeight: 400, marginLeft: 8 }}>· zbývá {rem} fotek</span>
-                            : <span style={{ color: "#f4a261", fontWeight: 400, marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>
-                          }
-                        </div>
-                      </>
-                    );
-                  })() : (
-                    <>
-                      <div style={{ fontSize: 11, opacity: 0.6 }}>Dreambox</div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>
-                        {dreambox.size} fotek vybráno
-                        <span style={{ opacity: 0.5, fontWeight: 400, marginLeft: 8 }}>· z {photos.length}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div style={{ display: "flex", marginLeft: 18 }}>
-                  {[...dreambox].slice(0, 5).map((id, i) => {
+
+                {selectedPackageId ? (() => {
+                  const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
+                  const effective = pkg.includedPhotos + usedCredits;
+                  const rem = effective - dreambox.size;
+                  return (
+                    <div style={{
+                      padding: "6px 14px", border: "1px solid rgba(255,255,255,0.12)",
+                      fontSize: 12, color: rem >= 0 ? "rgba(255,255,255,0.6)" : "#f4a261",
+                    }}>
+                      {rem >= 0
+                        ? <><span style={{ color: "#fff", fontWeight: 600 }}>Balíček {pkg.name}</span> · zbývá {rem} {rem === 1 ? "fotka" : rem < 5 ? "fotky" : "fotek"}</>
+                        : <><span style={{ fontWeight: 600 }}>Balíček {pkg.name}</span> · {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</>
+                      }
+                    </div>
+                  );
+                })() : (
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+                    z {photos.length} fotek
+                  </div>
+                )}
+              </div>
+
+              {/* Center: thumbnails */}
+              <div style={{ display: "flex", flex: 1, justifyContent: "center" }}>
+                <div style={{ display: "flex" }}>
+                  {[...dreambox].slice(0, 7).map((id, i) => {
                     const p = photos.find((ph) => ph.id === id);
                     return p ? (
-                      <div key={id} style={{ width: 32, height: 32, borderRadius: 0, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid #1c1a17", background: "#3a3530" }}>
+                      <div key={id} style={{ width: 38, height: 38, overflow: "hidden", marginLeft: i === 0 ? 0 : -10, border: "2.5px solid rgba(22,20,18,0.97)", background: "#3a3530" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     ) : null;
                   })}
-                  {dreambox.size > 5 && (
-                    <div style={{ width: 32, height: 32, borderRadius: 0, marginLeft: -8, background: "rgba(255,255,255,0.15)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, border: "2px solid #1c1a17" }}>
-                      +{dreambox.size - 5}
+                  {dreambox.size > 7 && (
+                    <div style={{ width: 38, height: 38, marginLeft: -10, background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, border: "2.5px solid rgba(22,20,18,0.97)" }}>
+                      +{dreambox.size - 7}
                     </div>
                   )}
                 </div>
               </div>
-              <button onClick={() => setStep(2)} style={{
-                all: "unset", cursor: "pointer",
-                height: 44, padding: "0 20px", borderRadius: 0,
-                background: "#fff", color: "var(--fp-ink)",
-                fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>
-                Pokračovat ke konfiguraci <ArrowRight size={16} strokeWidth={2} />
+
+              {/* Right: CTA */}
+              <button
+                onClick={() => setStep(2)}
+                style={{
+                  all: "unset", cursor: "pointer",
+                  height: 48, padding: "0 28px",
+                  background: "var(--fp-accent)", color: "#fff",
+                  fontSize: 14, fontWeight: 700,
+                  display: "flex", alignItems: "center", gap: 8,
+                  letterSpacing: "0.02em", flexShrink: 0,
+                  transition: "filter 0.15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.1)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "none"; }}
+              >
+                Pokračovat ke konfiguraci
+                <ArrowRight size={16} strokeWidth={2.5} />
               </button>
             </div>
           )}
