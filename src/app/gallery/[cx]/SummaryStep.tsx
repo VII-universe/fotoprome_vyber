@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS, PACKAGES,
-  type ColorOption, type SizeOption,
+  RETOUCH_LABELS, type ColorOption, type SizeOption, type RetouchLevel,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, Pencil, Trash2, Plus, Minus, X, Check } from "lucide-react";
@@ -35,7 +35,8 @@ const COLOR_DOTS: { id: ColorOption; dot: string }[] = [
 export function SummaryStep({ cx }: { cx: string }) {
   const router = useRouter();
   const {
-    photos, dreambox, configs, addons, globalNotes, setGlobalNotes, delivery,
+    photos, dreambox, configs, addons, globalNotes, setGlobalNotes,
+    globalRetouchLevel, setGlobalRetouchLevel, delivery,
     setStep, reset, selectedPackageId, usedCredits,
     setPrintLine, addPrintLine, removePrintLine, toggleHeart,
   } = useGalleryStore();
@@ -480,6 +481,9 @@ export function SummaryStep({ cx }: { cx: string }) {
             />
           </div>
 
+          {/* Míra retuší */}
+          <RetouchSlider value={globalRetouchLevel} onChange={setGlobalRetouchLevel} />
+
           {/* Doplňky z Kroku 3 */}
           {addons.length > 0 && (
             <div style={{ marginTop: 32 }}>
@@ -628,6 +632,110 @@ export function SummaryStep({ cx }: { cx: string }) {
         }}>
           <ArrowLeft size={14} strokeWidth={1.8} />Zpět
         </button>
+      </div>
+    </div>
+  );
+}
+
+const RETOUCH_LEVELS: RetouchLevel[] = ["none", "light", "medium", "heavy"];
+
+const RETOUCH_DESCS: Record<RetouchLevel, string> = {
+  none:   "Fotografie bez jakýchkoli úprav",
+  light:  "Jemné vyrovnání světla a tónu",
+  medium: "Standardní úpravy — doporučeno",
+  heavy:  "Výrazné zpracování, stylizace",
+};
+
+function RetouchSlider({ value, onChange }: { value: RetouchLevel; onChange: (v: RetouchLevel) => void }) {
+  const idx = RETOUCH_LEVELS.indexOf(value);
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
+          Míra retuší
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fp-ink)" }}>
+          {RETOUCH_LABELS[value]}
+        </div>
+      </div>
+
+      <div style={{
+        background: "var(--fp-surface)", border: "1px solid var(--fp-line)",
+        padding: "20px 20px 18px",
+      }}>
+        {/* Slider track */}
+        <div style={{ position: "relative", marginBottom: 16 }}>
+          <style>{`
+            .retouch-slider {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 100%;
+              height: 3px;
+              background: linear-gradient(
+                to right,
+                var(--fp-ink) 0%,
+                var(--fp-ink) ${idx / 3 * 100}%,
+                var(--fp-line) ${idx / 3 * 100}%,
+                var(--fp-line) 100%
+              );
+              outline: none;
+              cursor: pointer;
+            }
+            .retouch-slider::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              width: 20px; height: 20px;
+              background: var(--fp-ink);
+              border-radius: 50%;
+              border: 3px solid var(--fp-bg);
+              box-shadow: 0 0 0 1.5px var(--fp-ink);
+            }
+            .retouch-slider::-moz-range-thumb {
+              width: 20px; height: 20px;
+              background: var(--fp-ink);
+              border-radius: 50%;
+              border: 3px solid var(--fp-bg);
+              box-shadow: 0 0 0 1.5px var(--fp-ink);
+            }
+          `}</style>
+          <input
+            type="range"
+            className="retouch-slider"
+            min={0} max={3} step={1}
+            value={idx}
+            onChange={e => onChange(RETOUCH_LEVELS[parseInt(e.target.value)])}
+          />
+        </div>
+
+        {/* Labels pod sliders */}
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          {RETOUCH_LEVELS.map((lvl, i) => (
+            <button
+              key={lvl}
+              onClick={() => onChange(lvl)}
+              style={{
+                all: "unset", cursor: "pointer",
+                fontSize: 10.5, fontWeight: lvl === value ? 700 : 400,
+                color: lvl === value ? "var(--fp-ink)" : "var(--fp-ink-3)",
+                letterSpacing: "0.04em",
+                textAlign: i === 0 ? "left" : i === 3 ? "right" : "center",
+                flex: 1,
+                transition: "color 0.15s",
+              }}
+            >
+              {RETOUCH_LABELS[lvl]}
+            </button>
+          ))}
+        </div>
+
+        {/* Description */}
+        <div style={{
+          marginTop: 12, padding: "9px 12px",
+          background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
+          fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic",
+        }}>
+          {RETOUCH_DESCS[value]}
+        </div>
       </div>
     </div>
   );

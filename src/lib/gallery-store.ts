@@ -237,6 +237,7 @@ export interface GalleryState {
   filterMode: "all" | "suggested" | "dreambox";
   addons: AddonItem[];
   globalNotes: string;
+  globalRetouchLevel: RetouchLevel;
   coupon: string;
   delivery: 1 | 2;
   paper: 1 | 2;
@@ -250,6 +251,7 @@ export interface GalleryState {
   setPackage: (id: string | null) => void;
   setPhotoCredits: (n: number) => void;
   setUsedCredits: (n: number) => void;
+  setGlobalRetouchLevel: (level: RetouchLevel) => void;
   toggleHeart: (pid: string, zone: "p" | "l", did?: string) => void;
   setDreamboxIds: (ids: Set<string>) => void;
   setConfig: (pid: string, config: Partial<PhotoConfig>) => void;
@@ -274,6 +276,7 @@ const defaultState = {
   filterMode: "all" as const,
   addons: [] as AddonItem[],
   globalNotes: "",
+  globalRetouchLevel: "none" as RetouchLevel,
   coupon: "",
   delivery: 1 as const,
   paper: 1 as const,
@@ -362,6 +365,7 @@ export const useGalleryStore = create<GalleryState>()(
       setPhotoCredits: (photoCredits) => set({ photoCredits }),
       setUsedCredits: (usedCredits) => set({ usedCredits }),
       setGlobalNotes: (globalNotes) => set({ globalNotes }),
+      setGlobalRetouchLevel: (globalRetouchLevel) => set({ globalRetouchLevel }),
 
       upsertAddon: (item) =>
         set((s) => ({
