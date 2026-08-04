@@ -462,7 +462,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
               boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
               backdropFilter: "blur(12px)",
             }}>
-              <div style={{ fontSize: 18, flexShrink: 0 }}>
+              <div style={{ fontSize: 36, flexShrink: 0, lineHeight: 1 }}>
                 {nudge.type === "fill" ? "🎁" : "✨"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
