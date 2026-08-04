@@ -6,7 +6,7 @@ import {
   type ColorOption, type SizeOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Link, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Link, Loader2, MoreHorizontal, Pencil, Plus, ShoppingCart, Sparkles, Trash2, ZoomIn, X, Check } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { GalleryStep } from "@/lib/gallery-store";
@@ -80,7 +80,7 @@ function calcTotal(
 }
 
 export function ConfiguratorStep({ cx }: { cx: string }) {
-  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart, selectedPackageId, setPackage } = useGalleryStore();
+  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart, selectedPackageId, setPackage, cartPhotos, addToCart, removeFromCart } = useGalleryStore();
   const [saving, setSaving] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -136,7 +136,6 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   const safeIdx = activePrintIdx < prints.length ? activePrintIdx : 0;
   const previewColor: ColorOption = prints[safeIdx]?.color ?? "color";
 
-  const activeLine = prints[safeIdx];
 
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const total = calcTotal(dreamboxPhotos, configs, selectedPackageId);
@@ -226,14 +225,12 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   if (isMobile) {
     return (
       <MobileConfiguratorLayout
-        cx={cx}
         dreamboxPhotos={dreamboxPhotos}
         selectedPid={selectedPid}
         selectPhoto={selectPhoto}
         selectedPhoto={selectedPhoto}
         selectedIdx={selectedIdx}
         cfg={cfg}
-        activePrintIdx={activePrintIdx}
         setActivePrintIdx={setActivePrintIdx}
         safeIdx={safeIdx}
         previewColor={previewColor}
@@ -371,8 +368,8 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
           {dreamboxPhotos.map((p, photoIdx) => {
             const isActive = p.id === selectedPid;
             const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
-            const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
             const isMenuOpen = menuPid === p.id;
+            const isCarted = cartPhotos.has(p.id);
             const pkgStatus = activePkg
               ? photoIdx < activePkg.includedPhotos ? "included" : "extra"
               : null;
@@ -388,9 +385,9 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   style={{
                     all: "unset", cursor: "pointer", display: "block",
                     height: 80, overflow: "hidden",
-                    outline: isActive ? "2px solid var(--fp-ink)" : "2px solid transparent",
+                    outline: isActive ? "2px solid var(--fp-ink)" : isCarted ? "2px solid var(--fp-accent)" : "2px solid transparent",
                     outlineOffset: "2px",
-                    opacity: isActive ? 1 : 0.6,
+                    opacity: isActive ? 1 : isCarted ? 0.9 : 0.6,
                     transition: "opacity 0.2s, outline-color 0.15s",
                   }}
                 >
@@ -400,6 +397,18 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                     style={{ height: "100%", width: "auto", display: "block" }}
                   />
                 </button>
+                {/* Cart badge */}
+                {isCarted && (
+                  <div style={{
+                    position: "absolute", top: 4, left: 4,
+                    width: 18, height: 18, borderRadius: "50%",
+                    background: "var(--fp-accent)", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    pointerEvents: "none",
+                  }}>
+                    <Check size={11} strokeWidth={3} />
+                  </div>
+                )}
                 {/* Package badge */}
                 {pkgStatus && (
                   <div style={{
@@ -573,82 +582,220 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         {/* ── R: config panel ── */}
 
         <div style={{ borderLeft: "1px solid var(--fp-line)", overflow: "auto", background: "var(--fp-surface)", padding: "20px 20px 100px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-
-            {/* ── Print lines (multi-format) ── */}
-            <div>
-              <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 12 }}>
-                Formáty tisku
+          {cartPhotos.has(selectedPid) ? (
+            /* ── LOCKED: v košíku ── */
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {/* Locked header */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "12px 14px", marginBottom: 16,
+                background: "rgba(var(--fp-accent-rgb, 160,120,80), 0.10)",
+                border: "1px solid var(--fp-accent)",
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                  background: "var(--fp-accent)", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Check size={14} strokeWidth={3} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fp-accent)" }}>Přidáno do košíku</div>
+                  <div style={{ fontSize: 10.5, color: "var(--fp-ink-3)", marginTop: 1 }}>Pro úpravy klikněte na Upravit</div>
+                </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {(cfg?.prints ?? []).map((line, idx) => {
+              {/* Read-only print summary */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 1, marginBottom: 16 }}>
+                {(cfg?.prints ?? []).filter(l => l.qty > 0).map((line, li) => {
+                  const sizeDef = SIZES.find(s => s.id === line.size);
+                  const colorDot = COLORS.find(c => c.id === line.color);
                   const pkgSt = activePkg
                     ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
                     : null;
+                  const basePrice = sizeDef?.price ?? 0;
+                  const unitPrice =
+                    pkgSt === "included" && line.size === "S" ? 0 :
+                    pkgSt === "included" && line.size !== "retouch_only" ? basePrice - S_PRICE :
+                    pkgSt === "extra" && line.size === "S" ? (activePkg?.extraPhotoPrice ?? basePrice) :
+                    basePrice;
+                  const lineTotal = unitPrice * line.qty;
+
                   return (
-                    <PrintLineRow
-                      key={idx}
-                      index={idx}
-                      isActive={safeIdx === idx}
-                      line={line}
-                      onActivate={() => setActivePrintIdx(idx)}
-                      onColorChange={(color) => {
-                        setPrintLine(selectedPid, idx, { color });
-                        setActivePrintIdx(idx);
-                      }}
-                      onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
-                      onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-                      onRemove={() => {
-                        removePrintLine(selectedPid, idx);
-                        setActivePrintIdx(0);
-                      }}
-                      canRemove={(cfg?.prints?.length ?? 0) > 1}
-                      isFirst={idx === 0}
-                      packageStatus={pkgSt}
-                      extraPhotoPrice={activePkg?.extraPhotoPrice}
-                      photoThumbUrl={selectedPhoto?.thumbUrl}
-                    />
+                    <div key={li} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px",
+                      background: li % 2 === 0 ? "var(--fp-bg)" : "var(--fp-surface)",
+                      border: "1px solid var(--fp-line)",
+                      marginTop: li === 0 ? 0 : -1,
+                    }}>
+                      <div style={{
+                        width: 14, height: 14, borderRadius: "50%", flexShrink: 0,
+                        background: colorDot?.dot ?? "#ccc",
+                        boxShadow: "0 0 0 1px rgba(28,26,23,0.15)",
+                      }} />
+                      <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>
+                        {line.size === "retouch_only" ? "Pouze retuš" : `${line.size} · ${sizeDef?.sub}`}
+                        <span style={{ fontSize: 11, color: "var(--fp-ink-3)", marginLeft: 8 }}>
+                          {COLOR_LABELS[line.color]}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--fp-ink-3)", fontFamily: "ui-monospace, monospace" }}>
+                        {line.qty}×
+                      </div>
+                      <div style={{
+                        fontSize: 13, fontWeight: 700, fontFamily: "ui-monospace, monospace",
+                        color: lineTotal === 0 ? "#2d8a4e" : "var(--fp-ink)", minWidth: 52, textAlign: "right",
+                      }}>
+                        {lineTotal === 0 ? "zdarma" : `${lineTotal} Kč`}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
 
+              {cfg?.notes && (
+                <div style={{ padding: "8px 12px", background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic", marginBottom: 16 }}>
+                  „{cfg.notes}"
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => removeFromCart(selectedPid)}
+                  style={{
+                    all: "unset", cursor: "pointer",
+                    flex: 1, height: 40,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    border: "1px solid var(--fp-line)", fontSize: 13, fontWeight: 600,
+                    color: "var(--fp-ink)", transition: "all 0.15s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--fp-surface)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <Pencil size={13} strokeWidth={2} /> Upravit
+                </button>
+                <button
+                  onClick={() => removeFromFilmstrip(selectedPid)}
+                  style={{
+                    all: "unset", cursor: "pointer",
+                    height: 40, padding: "0 14px",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    border: "1px solid var(--fp-line)", fontSize: 13,
+                    color: "var(--fp-ink-3)", transition: "all 0.15s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#c0392b"; (e.currentTarget as HTMLElement).style.borderColor = "#c0392b"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--fp-ink-3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--fp-line)"; }}
+                >
+                  <Trash2 size={13} strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── EDITABLE ── */
+            <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+
+              {/* ── Print lines (multi-format) ── */}
+              <div>
+                <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 12 }}>
+                  Formáty tisku
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(cfg?.prints ?? []).map((line, idx) => {
+                    const pkgSt = activePkg
+                      ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                      : null;
+                    return (
+                      <PrintLineRow
+                        key={idx}
+                        index={idx}
+                        isActive={safeIdx === idx}
+                        line={line}
+                        onActivate={() => setActivePrintIdx(idx)}
+                        onColorChange={(color) => {
+                          setPrintLine(selectedPid, idx, { color });
+                          setActivePrintIdx(idx);
+                        }}
+                        onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
+                        onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+                        onRemove={() => {
+                          removePrintLine(selectedPid, idx);
+                          setActivePrintIdx(0);
+                        }}
+                        canRemove={(cfg?.prints?.length ?? 0) > 1}
+                        isFirst={idx === 0}
+                        packageStatus={pkgSt}
+                        extraPhotoPrice={activePkg?.extraPhotoPrice}
+                        photoThumbUrl={selectedPhoto?.thumbUrl}
+                      />
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => addPrintLine(selectedPid)}
+                  style={{
+                    all: "unset", cursor: "pointer",
+                    marginTop: 10, width: "100%", boxSizing: "border-box",
+                    height: 36, borderRadius: 0,
+                    border: "1.5px dashed var(--fp-line)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    gap: 6, fontSize: 12.5, fontWeight: 500,
+                    color: "var(--fp-ink-3)",
+                    transition: "border-color 0.15s, color 0.15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fp-accent)"; e.currentTarget.style.color = "var(--fp-accent)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--fp-line)"; e.currentTarget.style.color = "var(--fp-ink-3)"; }}
+                >
+                  <Plus size={14} strokeWidth={2} /> Přidat další formát
+                </button>
+              </div>
+
+              {/* ── Note ── */}
+              <ConfigField label="Poznámka k fotce">
+                <textarea
+                  value={cfg?.notes ?? ""}
+                  onChange={(e) => setConfig(selectedPid, { notes: e.target.value })}
+                  placeholder="Např. zesvětlit pozadí, ostřejší oči…"
+                  style={{
+                    width: "100%", boxSizing: "border-box", minHeight: 70,
+                    padding: 10, borderRadius: 0,
+                    background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
+                    fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
+                    resize: "vertical", outline: "none",
+                  }}
+                />
+              </ConfigField>
+
+              {/* ── Přidat do košíku ── */}
               <button
-                onClick={() => addPrintLine(selectedPid)}
+                onClick={() => {
+                  addToCart(selectedPid);
+                  // Přejít automaticky na další nekonfigurovano foto
+                  const nextUncart = dreamboxPhotos.find(p => p.id !== selectedPid && !cartPhotos.has(p.id));
+                  if (nextUncart) selectPhoto(nextUncart.id);
+                }}
                 style={{
                   all: "unset", cursor: "pointer",
-                  marginTop: 10, width: "100%", boxSizing: "border-box",
-                  height: 36, borderRadius: 0,
-                  border: "1.5px dashed var(--fp-line)",
+                  width: "100%", boxSizing: "border-box",
+                  height: 48,
+                  background: "var(--fp-accent)", color: "#fff",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  gap: 6, fontSize: 12.5, fontWeight: 500,
-                  color: "var(--fp-ink-3)",
-                  transition: "border-color 0.15s, color 0.15s",
+                  gap: 8, fontSize: 14, fontWeight: 700,
+                  letterSpacing: "0.02em",
+                  transition: "filter 0.15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--fp-accent)"; e.currentTarget.style.color = "var(--fp-accent)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--fp-line)"; e.currentTarget.style.color = "var(--fp-ink-3)"; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.08)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "none"; }}
               >
-                <Plus size={14} strokeWidth={2} /> Přidat další formát
+                <ShoppingCart size={16} strokeWidth={2} />
+                Přidat do košíku
               </button>
+
             </div>
-
-            {/* ── Note ── */}
-            <ConfigField label="Poznámka k fotce">
-              <textarea
-                value={cfg?.notes ?? ""}
-                onChange={(e) => setConfig(selectedPid, { notes: e.target.value })}
-                placeholder="Např. zesvětlit pozadí, ostřejší oči…"
-                style={{
-                  width: "100%", boxSizing: "border-box", minHeight: 70,
-                  padding: 10, borderRadius: 0,
-                  background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
-                  fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
-                  resize: "vertical", outline: "none",
-                }}
-              />
-            </ConfigField>
-
-          </div>
+          )}
         </div>
       </div>
 
@@ -685,27 +832,25 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
           {/* Center: info */}
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
-            {/* Photo count chip */}
+            {/* Cart progress chip */}
             <div style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "6px 14px",
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: `1px solid ${cartPhotos.size === dreamboxPhotos.length ? "var(--fp-accent)" : "rgba(255,255,255,0.12)"}`,
               color: "rgba(255,255,255,0.6)",
               fontSize: 12,
+              transition: "border-color 0.2s",
             }}>
-              <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "#fff", fontSize: 14 }}>
-                {dreamboxPhotos.length}
+              <ShoppingCart size={13} color={cartPhotos.size === dreamboxPhotos.length ? "var(--fp-accent)" : "rgba(255,255,255,0.5)"} />
+              <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: cartPhotos.size === dreamboxPhotos.length ? "var(--fp-accent)" : "#fff", fontSize: 14 }}>
+                {cartPhotos.size}
               </span>
-              <span>{dreamboxPhotos.length === 1 ? "fotka" : dreamboxPhotos.length < 5 ? "fotky" : "fotek"}</span>
+              <span style={{ color: "rgba(255,255,255,0.4)" }}>/</span>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}>{dreamboxPhotos.length} v košíku</span>
               {activePkg && (
                 <>
-                  <span style={{ opacity: 0.3 }}>·</span>
-                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Balíček {activePkg.name}</span>
-                  {dreamboxPhotos.length > activePkg.includedPhotos && (
-                    <span style={{ color: "#e8a84a", fontSize: 11 }}>
-                      +{dreamboxPhotos.length - activePkg.includedPhotos} navíc
-                    </span>
-                  )}
+                  <span style={{ opacity: 0.2 }}>·</span>
+                  <span style={{ color: "rgba(255,255,255,0.4)" }}>Bal. {activePkg.name}</span>
                 </>
               )}
             </div>
@@ -822,14 +967,12 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 // ── Mobile configurator layout ──────────────────────────────────────────────
 
 interface MobileConfiguratorLayoutProps {
-  cx: string;
   dreamboxPhotos: GalleryPhoto[];
   selectedPid: string;
   selectPhoto: (pid: string) => void;
   selectedPhoto: GalleryPhoto | undefined;
   selectedIdx: number;
   cfg: ReturnType<typeof useGalleryStore.getState>["configs"][string] | undefined;
-  activePrintIdx: number;
   setActivePrintIdx: (i: number) => void;
   safeIdx: number;
   previewColor: ColorOption;
@@ -844,14 +987,12 @@ interface MobileConfiguratorLayoutProps {
 }
 
 function MobileConfiguratorLayout({
-  cx,
   dreamboxPhotos,
   selectedPid,
   selectPhoto,
   selectedPhoto,
   selectedIdx,
   cfg,
-  activePrintIdx,
   setActivePrintIdx,
   safeIdx,
   previewColor,
@@ -865,8 +1006,19 @@ function MobileConfiguratorLayout({
   shareToast,
 }: MobileConfiguratorLayoutProps) {
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
-  const { configs, setConfig, setPrintLine, addPrintLine, removePrintLine } = useGalleryStore();
+  const { configs, setConfig, setPrintLine, addPrintLine, removePrintLine, cartPhotos, addToCart, removeFromCart, toggleHeart, photos } = useGalleryStore();
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const isCarted = cartPhotos.has(selectedPid);
+
+  function removeFromFilmstripMobile(pid: string) {
+    const photo = photos.find(p => p.id === pid);
+    removeFromCart(pid);
+    toggleHeart(pid, photo?.zone ?? "p");
+    const nextIdx = dreamboxPhotos.findIndex(p => p.id === pid);
+    const next = dreamboxPhotos.find((p, i) => p.id !== pid && i >= nextIdx) ?? dreamboxPhotos.find(p => p.id !== pid);
+    if (next) selectPhoto(next.id);
+  }
 
   return (
     <div style={{ paddingBottom: 120 }}>
@@ -908,14 +1060,15 @@ function MobileConfiguratorLayout({
         {dreamboxPhotos.map((p) => {
           const isActive = p.id === selectedPid;
           const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
+          const pCarted = cartPhotos.has(p.id);
           return (
             <button
               key={p.id}
               onClick={() => selectPhoto(p.id)}
               style={{
-                all: "unset", cursor: "pointer", flexShrink: 0,
+                all: "unset", cursor: "pointer", flexShrink: 0, position: "relative",
                 width: 52, height: 52, borderRadius: 0, overflow: "hidden",
-                border: isActive ? "2px solid var(--fp-accent)" : "2px solid transparent",
+                border: isActive ? `2px solid ${pCarted ? "var(--fp-accent)" : "var(--fp-ink)"}` : "2px solid transparent",
                 background: "#e8d8c8",
                 boxSizing: "border-box",
               }}
@@ -925,6 +1078,16 @@ function MobileConfiguratorLayout({
                 alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
+              {pCarted && (
+                <div style={{
+                  position: "absolute", top: 2, left: 2,
+                  width: 14, height: 14, borderRadius: "50%",
+                  background: "var(--fp-accent)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Check size={8} strokeWidth={3} color="#fff" />
+                </div>
+              )}
             </button>
           );
         })}
@@ -1009,69 +1172,171 @@ function MobileConfiguratorLayout({
         </div>
       )}
 
-      {/* Print line cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-        {(cfg?.prints ?? []).map((line, idx) => {
-          const pkgSt = activePkg
-            ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
-            : null;
-          return (
-            <PrintLineRow
-              key={idx}
-              index={idx}
-              isActive={safeIdx === idx}
-              line={line}
-              onActivate={() => setActivePrintIdx(idx)}
-              onColorChange={(color) => {
-                setPrintLine(selectedPid, idx, { color });
-                setActivePrintIdx(idx);
-              }}
-              onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
-              onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-              onRemove={() => {
-                removePrintLine(selectedPid, idx);
-                setActivePrintIdx(0);
-              }}
-              canRemove={(cfg?.prints?.length ?? 0) > 1}
-              isFirst={idx === 0}
-              packageStatus={pkgSt}
-              extraPhotoPrice={activePkg?.extraPhotoPrice}
-              photoThumbUrl={selectedPhoto?.thumbUrl}
-            />
-          );
-        })}
-        <button
-          onClick={() => addPrintLine(selectedPid)}
-          style={{
-            all: "unset", cursor: "pointer",
-            width: "100%", boxSizing: "border-box",
-            height: 36, borderRadius: 0,
-            border: "1.5px dashed var(--fp-line)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 6, fontSize: 12.5, fontWeight: 500,
-            color: "var(--fp-ink-3)",
-          }}
-        >
-          <Plus size={14} strokeWidth={2} /> Přidat další formát
-        </button>
-      </div>
+      {isCarted ? (
+        /* ── LOCKED: v košíku ── */
+        <div style={{
+          marginBottom: 16,
+          border: "1.5px solid var(--fp-accent)",
+          background: "var(--fp-accent-soft)",
+          padding: "12px 14px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: "50%",
+              background: "var(--fp-accent)",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <Check size={11} strokeWidth={3} color="#fff" />
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--fp-accent)" }}>Přidáno do košíku</span>
+          </div>
 
-      {/* Note */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>Poznámka k fotce</div>
-        <textarea
-          value={cfg?.notes ?? ""}
-          onChange={(e) => setConfig(selectedPid, { notes: e.target.value })}
-          placeholder="Např. zesvětlit pozadí, ostřejší oči…"
-          style={{
-            width: "100%", boxSizing: "border-box", minHeight: 70,
-            padding: 10, borderRadius: 0,
-            background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
-            fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
-            resize: "vertical", outline: "none",
-          }}
-        />
-      </div>
+          {(cfg?.prints ?? []).map((line, idx) => {
+            const colorDef = COLORS.find(c => c.id === line.color) ?? COLORS[0];
+            const pkgSt = activePkg
+              ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+              : null;
+            const baseP = SIZES.find(s => s.id === line.size)?.price ?? 0;
+            const effP = pkgSt === "included" && line.size === "S" ? 0
+              : pkgSt === "included" && line.size !== "S" && line.size !== "retouch_only" ? baseP - S_PRICE
+              : pkgSt === "extra" && line.size === "S" ? (activePkg?.extraPhotoPrice ?? baseP)
+              : baseP;
+            return (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontSize: 12.5 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: colorDef.dot, flexShrink: 0, boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)" }} />
+                <span style={{ color: "var(--fp-ink)", fontWeight: 500 }}>{COLOR_LABELS[line.color]}</span>
+                {line.size !== "retouch_only" && (
+                  <><span style={{ color: "var(--fp-ink-3)" }}>·</span>
+                  <span style={{ color: "var(--fp-ink)" }}>{SIZES.find(s => s.id === line.size)?.label}</span>
+                  <span style={{ color: "var(--fp-ink-3)" }}>·</span>
+                  <span style={{ color: "var(--fp-ink-3)" }}>×{line.qty}</span></>
+                )}
+                <span style={{ marginLeft: "auto", fontWeight: 600, color: "var(--fp-ink)", fontFamily: "ui-monospace, monospace", fontSize: 12 }}>
+                  {(effP * line.qty).toLocaleString("cs-CZ")} Kč
+                </span>
+              </div>
+            );
+          })}
+
+          {cfg?.notes ? (
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic" }}>
+              {cfg.notes}
+            </div>
+          ) : null}
+
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button
+              onClick={() => removeFromCart(selectedPid)}
+              style={{
+                all: "unset", cursor: "pointer",
+                flex: 1, height: 40,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                border: "1px solid var(--fp-line)", background: "var(--fp-surface)",
+                fontSize: 12.5, fontWeight: 600, color: "var(--fp-ink)",
+              }}
+            >
+              <Pencil size={13} /> Upravit
+            </button>
+            <button
+              onClick={() => removeFromFilmstripMobile(selectedPid)}
+              style={{
+                all: "unset", cursor: "pointer",
+                width: 40, height: 40,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: "1px solid rgba(220,50,50,0.25)", background: "rgba(220,50,50,0.06)",
+                color: "rgba(200,40,40,0.8)",
+              }}
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Print line cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {(cfg?.prints ?? []).map((line, idx) => {
+              const pkgSt = activePkg
+                ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                : null;
+              return (
+                <PrintLineRow
+                  key={idx}
+                  index={idx}
+                  isActive={safeIdx === idx}
+                  line={line}
+                  onActivate={() => setActivePrintIdx(idx)}
+                  onColorChange={(color) => {
+                    setPrintLine(selectedPid, idx, { color });
+                    setActivePrintIdx(idx);
+                  }}
+                  onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
+                  onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+                  onRemove={() => {
+                    removePrintLine(selectedPid, idx);
+                    setActivePrintIdx(0);
+                  }}
+                  canRemove={(cfg?.prints?.length ?? 0) > 1}
+                  isFirst={idx === 0}
+                  packageStatus={pkgSt}
+                  extraPhotoPrice={activePkg?.extraPhotoPrice}
+                  photoThumbUrl={selectedPhoto?.thumbUrl}
+                />
+              );
+            })}
+            <button
+              onClick={() => addPrintLine(selectedPid)}
+              style={{
+                all: "unset", cursor: "pointer",
+                width: "100%", boxSizing: "border-box",
+                height: 36, borderRadius: 0,
+                border: "1.5px dashed var(--fp-line)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 6, fontSize: 12.5, fontWeight: 500,
+                color: "var(--fp-ink-3)",
+              }}
+            >
+              <Plus size={14} strokeWidth={2} /> Přidat další formát
+            </button>
+          </div>
+
+          {/* Note */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>Poznámka k fotce</div>
+            <textarea
+              value={cfg?.notes ?? ""}
+              onChange={(e) => setConfig(selectedPid, { notes: e.target.value })}
+              placeholder="Např. zesvětlit pozadí, ostřejší oči…"
+              style={{
+                width: "100%", boxSizing: "border-box", minHeight: 70,
+                padding: 10, borderRadius: 0,
+                background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
+                fontFamily: "inherit", fontSize: 13, color: "var(--fp-ink)",
+                resize: "vertical", outline: "none",
+              }}
+            />
+          </div>
+
+          {/* Přidat do košíku */}
+          <button
+            onClick={() => {
+              addToCart(selectedPid);
+              const nextUncart = dreamboxPhotos.find(p => p.id !== selectedPid && !cartPhotos.has(p.id));
+              if (nextUncart) selectPhoto(nextUncart.id);
+            }}
+            style={{
+              all: "unset", cursor: "pointer",
+              width: "100%", boxSizing: "border-box",
+              height: 48, marginBottom: 16,
+              background: "var(--fp-accent)", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 8, fontSize: 14, fontWeight: 700,
+            }}
+          >
+            <ShoppingCart size={16} /> Přidat do košíku
+          </button>
+        </>
+      )}
 
       {/* Floating bottom bar — mobile */}
       <div style={{
@@ -1506,64 +1771,6 @@ function ConfigField({ label, children }: { label: string; children: React.React
   );
 }
 
-// ── Tlačítko koše — odebere fotku z Dreamboxu přímo z konfigurátoru ────────
-
-function RemoveFromDreambox({
-  photoId, cx, isActive, onRemoved,
-}: {
-  photoId: string; cx: string; isActive: boolean; onRemoved: () => void;
-}) {
-  const { toggleHeart, photos } = useGalleryStore();
-  const [loading, setLoading] = useState(false);
-  const [confirm, setConfirm] = useState(false);
-
-  async function handleRemove(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (!confirm) { setConfirm(true); setTimeout(() => setConfirm(false), 2500); return; }
-    setLoading(true);
-    try {
-      const photo = photos.find(p => p.id === photoId);
-      await fetch("/api/dreambox", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          act: "drop", pid: photoId,
-          did: photo?.dreamboxItemId ?? "0",
-          zone: photo?.zone ?? "p", cx,
-        }),
-      });
-      toggleHeart(photoId, photo?.zone ?? "p");
-      onRemoved();
-    } catch {
-      toast.error("Nepodařilo se odebrat fotku");
-    } finally {
-      setLoading(false);
-      setConfirm(false);
-    }
-  }
-
-  return (
-    <button
-      onClick={handleRemove}
-      title={confirm ? "Klikni znovu pro potvrzení" : "Odebrat z výběru"}
-      style={{
-        all: "unset", cursor: "pointer",
-        width: 32, height: 72, flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: confirm ? "#c0392b" : "var(--fp-ink-4)",
-        background: confirm ? "rgba(192,57,43,0.08)" : "transparent",
-        transition: "color 0.15s, background 0.15s",
-      }}
-      onMouseEnter={e => { if (!confirm) e.currentTarget.style.color = "var(--fp-ink-2)"; }}
-      onMouseLeave={e => { if (!confirm) e.currentTarget.style.color = "var(--fp-ink-4)"; }}
-    >
-      {loading
-        ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
-        : <Trash2 size={14} strokeWidth={confirm ? 2.5 : 1.8} />
-      }
-    </button>
-  );
-}
 
 function StepDots({ active }: { active: number }) {
   const labels = ["Výběr fotek", "Parametry", "Rekapitulace"];
