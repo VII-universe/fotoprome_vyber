@@ -413,6 +413,97 @@ export function DreamboxStep({ cx }: { cx: string }) {
         </SmartGrid>
       )}
 
+      {/* ── Upsell nudge ── */}
+      {(() => {
+        const pkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
+        const pkgIdx = pkg ? PACKAGES.findIndex(p => p.id === pkg.id) : -1;
+        const nextPkg = pkgIdx >= 0 && pkgIdx < PACKAGES.length - 1 ? PACKAGES[pkgIdx + 1] : null;
+
+        let nudge: { type: "fill"; remaining: number } | { type: "upgrade"; nextPkg: typeof PACKAGES[0]; toAdd: number; priceDiff: number } | null = null;
+
+        if (pkg) {
+          const remaining = pkg.includedPhotos - dreambox.size;
+          if (remaining > 0 && remaining <= 3) {
+            // Close to filling — these photos are FREE
+            nudge = { type: "fill", remaining };
+          } else if (remaining < 0 && nextPkg) {
+            // Over limit — upgrading might help
+            const extraCount = -remaining;
+            const currentExtraCost = extraCount * pkg.extraPhotoPrice;
+            const upgradeCost = nextPkg.basePrice - pkg.basePrice;
+            // Show upgrade nudge if upgrade cost is reasonably close to current extra cost
+            if (upgradeCost <= currentExtraCost * 4) {
+              const toAdd = nextPkg.includedPhotos - dreambox.size;
+              nudge = { type: "upgrade", nextPkg, toAdd, priceDiff: upgradeCost };
+            }
+          }
+        } else if (dreambox.size > 0) {
+          // No package — if close to Mini threshold, nudge
+          const mini = PACKAGES[0];
+          const toMini = mini.includedPhotos - dreambox.size;
+          if (toMini > 0 && toMini <= 3) {
+            nudge = { type: "fill", remaining: toMini };
+          }
+        }
+
+        if (!nudge) return null;
+
+        return (
+          <div style={{
+            position: "fixed", bottom: dreambox.size > 0 ? (isMobile ? 134 : 100) : 24,
+            left: "50%", transform: "translateX(-50%)",
+            zIndex: 31, width: "auto", maxWidth: isMobile ? "calc(100vw - 24px)" : 560,
+            pointerEvents: "auto",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 16px 10px 14px",
+              background: nudge.type === "fill" ? "#2d5a27" : "#7a4f1a",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+              backdropFilter: "blur(12px)",
+            }}>
+              <div style={{ fontSize: 18, flexShrink: 0 }}>
+                {nudge.type === "fill" ? "🎁" : "✨"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {nudge.type === "fill" ? (
+                  <>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>
+                      Přidejte ještě {nudge.remaining} {nudge.remaining === 1 ? "fotku" : nudge.remaining < 5 ? "fotky" : "fotek"} — jsou zahrnuty v ceně!
+                    </div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
+                      {pkg ? `Balíček ${pkg.name} zahrnuje ${pkg.includedPhotos} fotek` : `Balíček Mini zahrnuje ${PACKAGES[0].includedPhotos} fotek`}
+                    </div>
+                  </>
+                ) : nudge.type === "upgrade" ? (
+                  <>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>
+                      Upgrade na {nudge.nextPkg.name} za +{nudge.priceDiff.toLocaleString("cs-CZ")} Kč
+                    </div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
+                      {nudge.nextPkg.includedPhotos} fotek v ceně · každá extra fotka pak jen {nudge.nextPkg.extraPhotoPrice} Kč
+                    </div>
+                  </>
+                ) : null}
+              </div>
+              {nudge.type === "upgrade" && (
+                <button
+                  onClick={() => setPackage(nudge.type === "upgrade" ? nudge.nextPkg.id : null)}
+                  style={{
+                    all: "unset", cursor: "pointer", flexShrink: 0,
+                    padding: "7px 14px", fontSize: 12, fontWeight: 700,
+                    background: "#fff", color: "#7a4f1a",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  Upgradovat
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Dark floating Dreambox bar ── */}
       {dreambox.size > 0 && (
         <div style={{
