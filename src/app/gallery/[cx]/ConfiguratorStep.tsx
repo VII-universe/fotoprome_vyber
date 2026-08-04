@@ -607,6 +607,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                       isFirst={idx === 0}
                       packageStatus={pkgSt}
                       extraPhotoPrice={activePkg?.extraPhotoPrice}
+                      photoThumbUrl={selectedPhoto?.thumbUrl}
                     />
                   );
                 })}
@@ -1004,6 +1005,7 @@ function MobileConfiguratorLayout({
               isFirst={idx === 0}
               packageStatus={pkgSt}
               extraPhotoPrice={activePkg?.extraPhotoPrice}
+              photoThumbUrl={selectedPhoto?.thumbUrl}
             />
           );
         })}
@@ -1133,9 +1135,10 @@ interface PrintLineRowProps {
   isFirst: boolean;
   packageStatus?: "included" | "extra" | null;
   extraPhotoPrice?: number;
+  photoThumbUrl?: string;
 }
 
-function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove, packageStatus, extraPhotoPrice }: PrintLineRowProps) {
+function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove, packageStatus, extraPhotoPrice, photoThumbUrl }: PrintLineRowProps) {
   const basePrice = SIZES.find((s) => s.id === line.size)?.price ?? 0;
   // Package-aware effective price per unit
   const effectiveUnitPrice =
@@ -1246,25 +1249,57 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 10 }}>
             Barevnost
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {COLORS.map((c) => {
               const isActive = line.color === c.id;
+              const thumbSrc = photoThumbUrl
+                ? `${BASE}${variantUrl(photoThumbUrl, c.id)}`
+                : null;
               return (
                 <button key={c.id} onClick={() => onColorChange(c.id)} title={COLOR_LABELS[c.id]} style={{
                   all: "unset", cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                 }}>
                   <div style={{
-                    width: 44, height: 44, borderRadius: "50%",
-                    background: c.dot,
+                    width: 52, height: 52, borderRadius: "50%",
+                    overflow: "hidden", flexShrink: 0, position: "relative",
                     boxShadow: isActive
                       ? `0 0 0 3px var(--fp-surface), 0 0 0 5px var(--fp-accent)`
-                      : "0 0 0 1.5px rgba(28,26,23,0.10)",
-                    transform: isActive ? "scale(1.1)" : "scale(1)",
+                      : "0 0 0 1.5px rgba(28,26,23,0.12)",
+                    transform: isActive ? "scale(1.08)" : "scale(1)",
                     transition: "all 0.18s ease",
-                  }} />
+                    background: c.dot,
+                  }}>
+                    {thumbSrc && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumbSrc}
+                        alt={COLOR_LABELS[c.id]}
+                        style={{
+                          position: "absolute", inset: 0,
+                          width: "100%", height: "100%",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    )}
+                    {isActive && (
+                      <div style={{
+                        position: "absolute", inset: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        background: "rgba(0,0,0,0.28)",
+                      }}>
+                        <div style={{
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: "var(--fp-accent)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: "#fff",
+                        }}>✓</div>
+                      </div>
+                    )}
+                  </div>
                   <span style={{
-                    fontSize: 10.5, fontWeight: isActive ? 600 : 400,
+                    fontSize: 10, fontWeight: isActive ? 600 : 400,
                     color: isActive ? "var(--fp-accent)" : "var(--fp-ink-3)",
                     whiteSpace: "nowrap", transition: "color 0.15s",
                   }}>{COLOR_LABELS[c.id]}</span>
