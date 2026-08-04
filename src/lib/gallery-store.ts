@@ -242,10 +242,14 @@ export interface GalleryState {
   paper: 1 | 2;
 
   selectedPackageId: string | null;
+  photoCredits: number;       // nevyčerpané fotky z předchozích objednávek
+  usedCredits: number;        // kredity použité v aktuální objednávce
 
   // Actions
   setPhotos: (photos: GalleryPhoto[]) => void;
   setPackage: (id: string | null) => void;
+  setPhotoCredits: (n: number) => void;
+  setUsedCredits: (n: number) => void;
   toggleHeart: (pid: string, zone: "p" | "l", did?: string) => void;
   setDreamboxIds: (ids: Set<string>) => void;
   setConfig: (pid: string, config: Partial<PhotoConfig>) => void;
@@ -274,6 +278,8 @@ const defaultState = {
   delivery: 1 as const,
   paper: 1 as const,
   selectedPackageId: null as string | null,
+  photoCredits: 0,
+  usedCredits: 0,
 };
 
 export const useGalleryStore = create<GalleryState>()(
@@ -353,6 +359,8 @@ export const useGalleryStore = create<GalleryState>()(
       setStep: (step) => set({ step }),
       setFilterMode: (filterMode) => set({ filterMode }),
       setPackage: (id) => set({ selectedPackageId: id }),
+      setPhotoCredits: (photoCredits) => set({ photoCredits }),
+      setUsedCredits: (usedCredits) => set({ usedCredits }),
       setGlobalNotes: (globalNotes) => set({ globalNotes }),
 
       upsertAddon: (item) =>

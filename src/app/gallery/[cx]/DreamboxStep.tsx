@@ -107,14 +107,22 @@ function SmartGrid({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function DreamboxStep({ cx }: { cx: string }) {
-  const { photos, dreambox, toggleHeart, filterMode, setFilterMode, setStep, selectedPackageId, setPackage } = useGalleryStore();
+  const { photos, dreambox, toggleHeart, filterMode, setFilterMode, setStep, selectedPackageId, setPackage, photoCredits, usedCredits, setPhotoCredits, setUsedCredits } = useGalleryStore();
 
   const [savingId,      setSavingId]      = useState<string | null>(null);
+  const [applyingCredits, setApplyingCredits] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
   const [viewMode,      setViewMode]      = useState<ViewMode>("masonry");
   const [dreamboxOrder, setDreamboxOrder] = useState<string[]>(() => [...dreambox]);
   const [landscapeIds,  setLandscapeIds]  = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    fetch("/api/credits")
+      .then(r => r.json())
+      .then(d => { if (typeof d.balance === "number") setPhotoCredits(d.balance); })
+      .catch(() => {});
+  }, [setPhotoCredits]);
 
   const handleOrientationDetect = useCallback((id: string) => {
     setLandscapeIds(prev => {
@@ -253,6 +261,92 @@ export function DreamboxStep({ cx }: { cx: string }) {
         </div>
       </div>
 
+      {/* ── Photo credits banner ── */}
+      {photoCredits > 0 && usedCredits === 0 && (
+        <div style={{
+          margin: "16px 0 0",
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, #2a1f0e 0%, #3d2d12 100%)",
+          border: "1px solid #6b4c1a",
+          display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
+        }}>
+          <div style={{ fontSize: 28, flexShrink: 0 }}>🎟️</div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#f0d080", marginBottom: 3 }}>
+              Máte {photoCredits} nevyčerpaných {photoCredits === 1 ? "fotku" : photoCredits < 5 ? "fotky" : "fotek"} z předchozí objednávky
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(240,208,128,0.65)", lineHeight: 1.5 }}>
+              Tyto fotky jsou zahrnuty v ceně — použijte je v této objednávce.
+            </div>
+          </div>
+          <button
+            disabled={applyingCredits}
+            onClick={async () => {
+              setApplyingCredits(true);
+              try {
+                const res = await fetch("/api/credits", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "use", amount: photoCredits }),
+                });
+                const d = await res.json();
+                if (d.ok) {
+                  setUsedCredits(d.used);
+                  setPhotoCredits(d.balance);
+                }
+              } catch { /* ignore */ }
+              finally { setApplyingCredits(false); }
+            }}
+            style={{
+              all: "unset", cursor: applyingCredits ? "not-allowed" : "pointer",
+              padding: "9px 20px", flexShrink: 0,
+              background: "#f0d080", color: "#2a1f0e",
+              fontSize: 12, fontWeight: 700, letterSpacing: "0.05em",
+              opacity: applyingCredits ? 0.6 : 1,
+              transition: "opacity 0.15s",
+            }}
+          >
+            Použít kredity ({photoCredits} fotek)
+          </button>
+        </div>
+      )}
+
+      {/* Credits applied confirmation */}
+      {usedCredits > 0 && (
+        <div style={{
+          margin: "16px 0 0",
+          padding: "10px 18px",
+          background: "rgba(45,90,39,0.15)",
+          border: "1px solid #2d5a27",
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <div style={{ fontSize: 18 }}>✅</div>
+          <div style={{ fontSize: 13, color: "#2d5a27", fontWeight: 600 }}>
+            {usedCredits} {usedCredits === 1 ? "fotka" : usedCredits < 5 ? "fotky" : "fotek"} z předchozí objednávky přidány do tohoto výběru
+          </div>
+          <button
+            onClick={async () => {
+              // Return the credits
+              try {
+                const res = await fetch("/api/credits", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "earn", cx: "return", packageName: "vrácení", unused: usedCredits }),
+                });
+                const d = await res.json();
+                if (d.ok) { setPhotoCredits(d.balance); setUsedCredits(0); }
+              } catch { /* ignore */ }
+            }}
+            style={{
+              all: "unset", cursor: "pointer", marginLeft: "auto",
+              fontSize: 11, color: "#2d5a27", textDecoration: "underline",
+            }}
+          >
+            Zrušit
+          </button>
+        </div>
+      )}
+
       {/* ── Package picker ── */}
       <div style={{ margin: "20px 0", padding: "18px 20px", background: "var(--fp-surface)", border: "1px solid var(--fp-line)" }}>
         <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 14 }}>
@@ -261,7 +355,8 @@ export function DreamboxStep({ cx }: { cx: string }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {PACKAGES.map((pkg) => {
             const isSelected = selectedPackageId === pkg.id;
-            const remaining = pkg.includedPhotos - dreambox.size;
+            const effectiveIncluded = pkg.includedPhotos + usedCredits;
+            const remaining = effectiveIncluded - dreambox.size;
             return (
               <button
                 key={pkg.id}
@@ -291,7 +386,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   }}>{pkg.name}</span>
                   <span style={{ fontSize: 11, color: isSelected ? "rgba(255,255,255,0.55)" : "var(--fp-ink-4)" }}>·</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "#fff" : "var(--fp-ink)" }}>
-                    {pkg.includedPhotos} fotek
+                    {usedCredits > 0 ? `${pkg.includedPhotos}+${usedCredits}` : pkg.includedPhotos} fotek
                   </span>
                 </div>
                 <div style={{ fontSize: 11, color: isSelected ? "rgba(255,255,255,0.6)" : "var(--fp-ink-3)", marginBottom: 10 }}>
@@ -535,9 +630,10 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   <span style={{ fontSize: 15, fontWeight: 700 }}>Vybráno {dreambox.size}</span>
                   {selectedPackageId ? (() => {
                     const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
-                    const rem = pkg.includedPhotos - dreambox.size;
+                    const effective = pkg.includedPhotos + usedCredits;
+                    const rem = effective - dreambox.size;
                     return rem >= 0
-                      ? <span style={{ fontSize: 11, opacity: 0.65, marginLeft: 8 }}>· {rem === 0 ? "balíček plný" : `zbývá ${rem} z ${pkg.includedPhotos}`}</span>
+                      ? <span style={{ fontSize: 11, opacity: 0.65, marginLeft: 8 }}>· {rem === 0 ? "balíček plný" : `zbývá ${rem} z ${effective}`}</span>
                       : <span style={{ fontSize: 11, color: "#f4a261", marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>;
                   })() : <span style={{ fontSize: 12, opacity: 0.5, marginLeft: 6 }}>/ {photos.length}</span>}
                 </div>
@@ -593,14 +689,17 @@ export function DreamboxStep({ cx }: { cx: string }) {
                 <div style={{ color: "#fff" }}>
                   {selectedPackageId ? (() => {
                     const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
-                    const rem = pkg.includedPhotos - dreambox.size;
+                    const effective = pkg.includedPhotos + usedCredits;
+                    const rem = effective - dreambox.size;
                     return (
                       <>
-                        <div style={{ fontSize: 11, opacity: 0.6 }}>Balíček {pkg.name} · {pkg.includedPhotos} fotek</div>
+                        <div style={{ fontSize: 11, opacity: 0.6 }}>
+                          Balíček {pkg.name} · {pkg.includedPhotos} fotek{usedCredits > 0 ? ` +${usedCredits} kredity` : ""}
+                        </div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>
                           {dreambox.size} vybráno
                           {rem >= 0
-                            ? <span style={{ opacity: 0.6, fontWeight: 400, marginLeft: 8 }}>· zbývá {rem} fotek z balíčku</span>
+                            ? <span style={{ opacity: 0.6, fontWeight: 400, marginLeft: 8 }}>· zbývá {rem} fotek</span>
                             : <span style={{ color: "#f4a261", fontWeight: 400, marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>
                           }
                         </div>

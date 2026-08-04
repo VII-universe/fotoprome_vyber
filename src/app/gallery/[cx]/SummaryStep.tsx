@@ -15,7 +15,7 @@ const S_PRICE = PRICE_MAP.S;
 
 export function SummaryStep({ cx }: { cx: string }) {
   const router = useRouter();
-  const { photos, dreambox, configs, addons, globalNotes, setGlobalNotes, delivery, setStep, reset, selectedPackageId } = useGalleryStore();
+  const { photos, dreambox, configs, addons, globalNotes, setGlobalNotes, delivery, setStep, reset, selectedPackageId, usedCredits } = useGalleryStore();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -59,6 +59,25 @@ export function SummaryStep({ cx }: { cx: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setOrderId(data.orderId);
+
+      // Save unused package photos as credits for next order
+      if (activePkg) {
+        const effectiveIncluded = activePkg.includedPhotos + usedCredits;
+        const unused = effectiveIncluded - dreamboxPhotos.length;
+        if (unused > 0) {
+          await fetch("/api/credits", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "earn",
+              cx,
+              packageName: activePkg.name,
+              unused,
+            }),
+          }).catch(() => {});
+        }
+      }
+
       setDone(true);
       toast.success("Objednávka odeslána!");
     } catch {
@@ -69,6 +88,12 @@ export function SummaryStep({ cx }: { cx: string }) {
   }
 
   if (done) {
+    const earnedCredits = (() => {
+      if (!activePkg) return 0;
+      const effectiveIncluded = activePkg.includedPhotos + usedCredits;
+      return Math.max(0, effectiveIncluded - dreamboxPhotos.length);
+    })();
+
     return (
       <div style={{ textAlign: "center", padding: "80px 24px" }}>
         <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#e3ebe2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
@@ -81,12 +106,31 @@ export function SummaryStep({ cx }: { cx: string }) {
         <p style={{ color: "var(--fp-ink-3)", fontSize: 13, maxWidth: 380, margin: "8px auto 32px" }}>
           Fotograf ji co nejdříve zpracuje. O dokončení vás informujeme e-mailem.
         </p>
-        <button onClick={() => { reset(); router.push("/dashboard"); }} style={{
-          all: "unset", cursor: "pointer", height: 44, padding: "0 24px", borderRadius: 0,
-          border: "1px solid var(--fp-line)", fontSize: 14, fontWeight: 500, color: "var(--fp-ink)",
-        }}>
-          Zpět na přehled
-        </button>
+        {earnedCredits > 0 && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 10,
+            padding: "12px 20px", marginBottom: 28,
+            background: "rgba(45,90,39,0.08)", border: "1px solid rgba(45,90,39,0.3)",
+          }}>
+            <span style={{ fontSize: 22 }}>🎟️</span>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#2d5a27" }}>
+                {earnedCredits} {earnedCredits === 1 ? "fotka" : earnedCredits < 5 ? "fotky" : "fotek"} připsáno jako kredit
+              </div>
+              <div style={{ fontSize: 11, color: "#2d5a27", opacity: 0.75 }}>
+                Využijete je při příští objednávce
+              </div>
+            </div>
+          </div>
+        )}
+        <div>
+          <button onClick={() => { reset(); router.push("/dashboard"); }} style={{
+            all: "unset", cursor: "pointer", height: 44, padding: "0 24px", borderRadius: 0,
+            border: "1px solid var(--fp-line)", fontSize: 14, fontWeight: 500, color: "var(--fp-ink)",
+          }}>
+            Zpět na přehled
+          </button>
+        </div>
       </div>
     );
   }
@@ -355,6 +399,21 @@ export function SummaryStep({ cx }: { cx: string }) {
             {submitting && <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />}
             Odeslat objednávku do ateliéru
           </button>
+          {(() => {
+            if (!activePkg) return null;
+            const effectiveIncluded = activePkg.includedPhotos + usedCredits;
+            const unused = effectiveIncluded - dreamboxPhotos.length;
+            if (unused <= 0) return null;
+            return (
+              <div style={{
+                marginTop: 12, padding: "10px 12px",
+                background: "rgba(45,90,39,0.08)", border: "1px solid rgba(45,90,39,0.3)",
+                fontSize: 12, color: "#2d5a27", lineHeight: 1.5,
+              }}>
+                🎟️ <strong>{unused} {unused === 1 ? "fotka" : unused < 5 ? "fotky" : "fotek"}</strong> z balíčku se přenese jako kredit do příští objednávky.
+              </div>
+            );
+          })()}
           <div style={{ fontSize: 11, color: "var(--fp-ink-3)", textAlign: "center", marginTop: 12, lineHeight: 1.5 }}>
             Po odeslání vám do 2–3 pracovních dnů potvrdíme zakázku e-mailem.
           </div>
