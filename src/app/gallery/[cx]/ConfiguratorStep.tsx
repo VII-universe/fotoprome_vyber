@@ -6,7 +6,7 @@ import {
   type ColorOption, type SizeOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Link, Loader2, MoreHorizontal, Plus, Sparkles, Trash2, ZoomIn, X } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { GalleryStep } from "@/lib/gallery-store";
@@ -83,6 +83,8 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
   const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart, selectedPackageId, setPackage } = useGalleryStore();
   const [saving, setSaving] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
   const [menuPid, setMenuPid] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [removing, setRemoving] = useState(false);
@@ -137,6 +139,31 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const total = calcTotal(dreamboxPhotos, configs, selectedPackageId);
+
+  async function sharePhoto(photo: GalleryPhoto) {
+    setSharing(true);
+    try {
+      const res = await fetch("/api/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photoUrl: photo.fullUrl,
+          thumbUrl: photo.thumbUrl,
+          photoNum: photo.num,
+          cx,
+        }),
+      });
+      const { token } = await res.json();
+      const url = `${window.location.origin}/share/${token}`;
+      await navigator.clipboard.writeText(url);
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 3000);
+    } catch {
+      toast.error("Nepodařilo se vytvořit odkaz");
+    } finally {
+      setSharing(false);
+    }
+  }
 
   async function saveAll() {
     setSaving(true);
@@ -208,6 +235,9 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         saveAll={saveAll}
         setStep={setStep}
         selectedPackageId={selectedPackageId}
+        sharePhoto={sharePhoto}
+        sharing={sharing}
+        shareToast={shareToast}
       />
     );
   }
@@ -401,6 +431,29 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 }}>
                   #{selectedPhoto.num}
                 </div>
+                {/* Share button */}
+                <button
+                  onClick={e => { e.stopPropagation(); sharePhoto(selectedPhoto); }}
+                  disabled={sharing}
+                  title="Sdílet náhled"
+                  style={{
+                    all: "unset", cursor: sharing ? "wait" : "pointer",
+                    position: "absolute", top: 10, right: 52,
+                    width: 34, height: 34,
+                    background: shareToast ? "var(--fp-ink)" : "rgba(255,255,255,0.88)",
+                    backdropFilter: "blur(8px)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    opacity: sharing ? 0.6 : 1,
+                    transition: "background 0.2s, opacity 0.2s",
+                  }}
+                >
+                  {shareToast
+                    ? <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", padding: "0 4px" }}>Zkopírováno!</span>
+                    : <Link size={15} style={{ color: "var(--fp-ink)" }} strokeWidth={2} />
+                  }
+                </button>
+
+                {/* Zoom button */}
                 <div
                   onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
                   style={{
@@ -678,6 +731,9 @@ interface MobileConfiguratorLayoutProps {
   saveAll: () => void;
   setStep: (s: GalleryStep) => void;
   selectedPackageId: string | null;
+  sharePhoto: (photo: GalleryPhoto) => void;
+  sharing: boolean;
+  shareToast: boolean;
 }
 
 function MobileConfiguratorLayout({
@@ -697,6 +753,9 @@ function MobileConfiguratorLayout({
   saveAll,
   setStep,
   selectedPackageId,
+  sharePhoto,
+  sharing,
+  shareToast,
 }: MobileConfiguratorLayoutProps) {
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const { configs, setConfig, setPrintLine, addPrintLine, removePrintLine } = useGalleryStore();
@@ -788,6 +847,26 @@ function MobileConfiguratorLayout({
             }}>
               #{selectedPhoto.num}
             </div>
+            {/* Share button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); sharePhoto(selectedPhoto); }}
+              disabled={sharing}
+              style={{
+                all: "unset", cursor: sharing ? "wait" : "pointer",
+                position: "absolute", top: 10, right: 52,
+                width: 34, height: 34,
+                background: shareToast ? "var(--fp-ink)" : "rgba(255,255,255,0.88)",
+                backdropFilter: "blur(8px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "background 0.2s",
+              }}
+            >
+              {shareToast
+                ? <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", padding: "0 3px" }}>✓</span>
+                : <Link size={15} style={{ color: "var(--fp-ink)" }} strokeWidth={2} />
+              }
+            </button>
+
             <div
               onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
               style={{
