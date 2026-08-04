@@ -390,6 +390,17 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   alt={`Foto ${selectedPhoto.num}`}
                   style={{ display: "block", width: "100%", objectFit: "cover" }}
                 />
+                {/* Photo number — top left */}
+                <div style={{
+                  position: "absolute", top: 0, left: 0,
+                  background: "var(--fp-ink)", color: "#fff",
+                  padding: "6px 12px",
+                  fontFamily: "ui-monospace, monospace",
+                  fontSize: 13, fontWeight: 600, letterSpacing: "0.06em",
+                  pointerEvents: "none",
+                }}>
+                  #{selectedPhoto.num}
+                </div>
                 <div
                   onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
                   style={{
@@ -410,7 +421,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
               {/* Navigation arrows */}
               <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>
-                  #{selectedPhoto.num} · {selectedIdx + 1} / {dreamboxPhotos.length}
+                  {selectedIdx + 1} / {dreamboxPhotos.length}
                 </div>
                 <div style={{ display: "flex", gap: 4 }}>
                   <button disabled={selectedIdx === 0} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx - 1].id)} style={{
@@ -766,6 +777,17 @@ function MobileConfiguratorLayout({
               alt={`Foto ${selectedPhoto.num}`}
               style={{ display: "block", width: "100%", objectFit: "cover" }}
             />
+            {/* Photo number — top left */}
+            <div style={{
+              position: "absolute", top: 0, left: 0,
+              background: "var(--fp-ink)", color: "#fff",
+              padding: "5px 10px",
+              fontFamily: "ui-monospace, monospace",
+              fontSize: 12, fontWeight: 600, letterSpacing: "0.06em",
+              pointerEvents: "none",
+            }}>
+              #{selectedPhoto.num}
+            </div>
             <div
               onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
               style={{
@@ -782,7 +804,7 @@ function MobileConfiguratorLayout({
 
           {/* Nav arrows */}
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{selectedPhoto.num} · {selectedIdx + 1}/{dreamboxPhotos.length}</div>
+            <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>{selectedIdx + 1}/{dreamboxPhotos.length}</div>
             <div style={{ display: "flex", gap: 4 }}>
               <button disabled={selectedIdx === 0} onClick={() => selectPhoto(dreamboxPhotos[selectedIdx - 1].id)} style={{
                 all: "unset", cursor: selectedIdx > 0 ? "pointer" : "default",
