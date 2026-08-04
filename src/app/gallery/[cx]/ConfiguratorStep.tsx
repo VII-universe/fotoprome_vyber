@@ -652,64 +652,95 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         </div>
       </div>
 
-      {/* Floating footer — stejný styl jako Dreambox sticky bar */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: isMobile ? "0 16px" : "0 48px", zIndex: 30, pointerEvents: "none" }}>
+      {/* Floating footer bar */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30,
+        background: "rgba(22,20,18,0.97)",
+        backdropFilter: "blur(24px)",
+        borderTop: "1px solid rgba(255,255,255,0.10)",
+        boxShadow: "0 -12px 48px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.06)",
+      }}>
         <div style={{
-          maxWidth: 1200, margin: "0 auto", marginBottom: 24,
-          padding: "10px 10px 10px 20px",
-          borderRadius: 0,
-          background: "rgba(28,26,23,0.95)",
-          backdropFilter: "blur(20px)",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
-          boxShadow: "0 18px 40px rgba(28,26,23,0.2)",
-          pointerEvents: "auto",
+          maxWidth: 1200, margin: "0 auto",
+          padding: "0 48px",
+          height: 72,
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
         }}>
-          {/* Mezisoučet */}
-          <div style={{ color: "#fff", paddingLeft: 6 }}>
-            {activePkg ? (
-              <>
-                <div style={{ fontSize: 11, opacity: 0.55 }}>
-                  Balíček {activePkg.name}
-                  {dreamboxPhotos.length > activePkg.includedPhotos &&
-                    ` + ${dreamboxPhotos.length - activePkg.includedPhotos} fotek navíc`}
-                </div>
-                <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
-                  {total.toLocaleString("cs-CZ")} Kč
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 11, opacity: 0.55 }}>Mezisoučet</div>
-                <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
-                  {total.toLocaleString("cs-CZ")} Kč
-                </div>
-              </>
-            )}
+          {/* Left: back */}
+          <button onClick={() => setStep(1)} style={{
+            all: "unset", cursor: "pointer",
+            height: 40, padding: "0 14px",
+            display: "flex", alignItems: "center", gap: 6,
+            border: "1px solid rgba(255,255,255,0.18)",
+            color: "rgba(255,255,255,0.65)",
+            fontSize: 13, fontWeight: 500,
+            flexShrink: 0,
+            transition: "all 0.15s",
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#fff"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.35)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.65)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.18)"; }}
+          >
+            <ArrowLeft size={14} strokeWidth={1.8} /> Zpět
+          </button>
+
+          {/* Center: info */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+            {/* Photo count chip */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 14px",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.6)",
+              fontSize: 12,
+            }}>
+              <span style={{ fontFamily: "ui-monospace, monospace", fontWeight: 700, color: "#fff", fontSize: 14 }}>
+                {dreamboxPhotos.length}
+              </span>
+              <span>{dreamboxPhotos.length === 1 ? "fotka" : dreamboxPhotos.length < 5 ? "fotky" : "fotek"}</span>
+              {activePkg && (
+                <>
+                  <span style={{ opacity: 0.3 }}>·</span>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Balíček {activePkg.name}</span>
+                  {dreamboxPhotos.length > activePkg.includedPhotos && (
+                    <span style={{ color: "#e8a84a", fontSize: 11 }}>
+                      +{dreamboxPhotos.length - activePkg.includedPhotos} navíc
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Price */}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
+                Celkem
+              </div>
+              <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 28, color: "#fff", lineHeight: 1 }}>
+                {total.toLocaleString("cs-CZ")} Kč
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setStep(1)} style={{
-              all: "unset", cursor: "pointer",
-              height: 44, padding: "0 16px", borderRadius: 0,
-              background: "rgba(255,255,255,0.12)", color: "#fff",
-              fontSize: 13.5, fontWeight: 500,
-              display: "flex", alignItems: "center", gap: 6,
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}>
-              <ArrowLeft size={14} strokeWidth={1.8} />Zpět
-            </button>
-            <button onClick={saveAll} disabled={saving} style={{
-              all: "unset", cursor: saving ? "not-allowed" : "pointer",
-              height: 44, padding: "0 20px", borderRadius: 0,
-              background: "#fff", color: "var(--fp-ink)",
-              fontSize: 14, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 6,
-              opacity: saving ? 0.7 : 1,
-            }}>
-              {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : null}
-              Pokračovat na rekapitulaci <ArrowRight size={16} strokeWidth={2} />
-            </button>
-          </div>
+          {/* Right: CTA */}
+          <button onClick={saveAll} disabled={saving} style={{
+            all: "unset", cursor: saving ? "not-allowed" : "pointer",
+            height: 48, padding: "0 28px",
+            background: "var(--fp-accent)",
+            color: "#fff",
+            fontSize: 14, fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 8,
+            letterSpacing: "0.02em",
+            flexShrink: 0,
+            opacity: saving ? 0.7 : 1,
+            transition: "opacity 0.15s, filter 0.15s",
+          }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLElement).style.filter = "brightness(1.1)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "none"; }}
+          >
+            {saving ? <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> : null}
+            Pokračovat na rekapitulaci
+            <ArrowRight size={16} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
@@ -1042,47 +1073,52 @@ function MobileConfiguratorLayout({
         />
       </div>
 
-      {/* Floating bottom bar */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "0 16px", zIndex: 30, pointerEvents: "none" }}>
+      {/* Floating bottom bar — mobile */}
+      <div style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 30,
+        background: "rgba(22,20,18,0.97)",
+        backdropFilter: "blur(24px)",
+        borderTop: "1px solid rgba(255,255,255,0.10)",
+        boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+      }}>
         <div style={{
-          maxWidth: 1200, margin: "0 auto", marginBottom: 24,
-          padding: "10px 10px 10px 20px",
-          borderRadius: 0,
-          background: "rgba(28,26,23,0.95)",
-          backdropFilter: "blur(20px)",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
-          boxShadow: "0 18px 40px rgba(28,26,23,0.2)",
-          pointerEvents: "auto",
+          padding: "10px 14px",
+          display: "flex", alignItems: "center", gap: 10,
         }}>
-          <div style={{ color: "#fff", paddingLeft: 6 }}>
-            <div style={{ fontSize: 11, opacity: 0.55 }}>Mezisoučet</div>
-            <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
+          {/* Back */}
+          <button onClick={() => setStep(1)} style={{
+            all: "unset", cursor: "pointer",
+            width: 42, height: 42, flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px solid rgba(255,255,255,0.18)",
+            color: "rgba(255,255,255,0.65)",
+          }}>
+            <ArrowLeft size={16} strokeWidth={1.8} />
+          </button>
+
+          {/* Price info */}
+          <div style={{ flex: 1, color: "#fff" }}>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              {dreamboxPhotos.length} {dreamboxPhotos.length === 1 ? "fotka" : "fotek"} · Celkem
+            </div>
+            <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22, lineHeight: 1.1 }}>
               {total.toLocaleString("cs-CZ")} Kč
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setStep(1)} style={{
-              all: "unset", cursor: "pointer",
-              height: 44, padding: "0 16px", borderRadius: 0,
-              background: "rgba(255,255,255,0.12)", color: "#fff",
-              fontSize: 13.5, fontWeight: 500,
-              display: "flex", alignItems: "center", gap: 6,
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}>
-              <ArrowLeft size={14} strokeWidth={1.8} />Zpět
-            </button>
-            <button onClick={saveAll} disabled={saving} style={{
-              all: "unset", cursor: saving ? "not-allowed" : "pointer",
-              height: 44, padding: "0 20px", borderRadius: 0,
-              background: "#fff", color: "var(--fp-ink)",
-              fontSize: 14, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 6,
-              opacity: saving ? 0.7 : 1,
-            }}>
-              {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : null}
-              Pokračovat <ArrowRight size={16} strokeWidth={2} />
-            </button>
-          </div>
+
+          {/* CTA */}
+          <button onClick={saveAll} disabled={saving} style={{
+            all: "unset", cursor: saving ? "not-allowed" : "pointer",
+            height: 42, padding: "0 18px",
+            background: "var(--fp-accent)", color: "#fff",
+            fontSize: 13, fontWeight: 700,
+            display: "flex", alignItems: "center", gap: 6,
+            flexShrink: 0,
+            opacity: saving ? 0.7 : 1,
+          }}>
+            {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : null}
+            Pokračovat <ArrowRight size={15} strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
