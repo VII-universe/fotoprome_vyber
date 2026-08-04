@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useGalleryStore } from "@/lib/gallery-store";
+import { useGalleryStore, PACKAGES } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import {
   Heart, Sparkles, ArrowRight, ZoomIn, LayoutGrid, Columns2, Grid3x3,
@@ -107,7 +107,7 @@ function SmartGrid({
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function DreamboxStep({ cx }: { cx: string }) {
-  const { photos, dreambox, toggleHeart, filterMode, setFilterMode, setStep } = useGalleryStore();
+  const { photos, dreambox, toggleHeart, filterMode, setFilterMode, setStep, selectedPackageId, setPackage } = useGalleryStore();
 
   const [savingId,      setSavingId]      = useState<string | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
@@ -253,6 +253,93 @@ export function DreamboxStep({ cx }: { cx: string }) {
         </div>
       </div>
 
+      {/* ── Package picker ── */}
+      <div style={{ margin: "20px 0", padding: "18px 20px", background: "var(--fp-surface)", border: "1px solid var(--fp-line)" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 14 }}>
+          Vyberte balíček
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {PACKAGES.map((pkg) => {
+            const isSelected = selectedPackageId === pkg.id;
+            const remaining = pkg.includedPhotos - dreambox.size;
+            return (
+              <button
+                key={pkg.id}
+                onClick={() => setPackage(isSelected ? null : pkg.id)}
+                style={{
+                  all: "unset", cursor: "pointer", flex: "1 1 160px",
+                  padding: "14px 16px", position: "relative",
+                  border: isSelected ? "2px solid var(--fp-ink)" : "1.5px solid var(--fp-line)",
+                  background: isSelected ? "var(--fp-ink)" : "var(--fp-bg)",
+                  transition: "all 0.18s ease",
+                  textAlign: "left",
+                }}
+              >
+                {pkg.tag && (
+                  <div style={{
+                    position: "absolute", top: -1, right: 12,
+                    background: isSelected ? "#fff" : "var(--fp-ink)",
+                    color: isSelected ? "var(--fp-ink)" : "#fff",
+                    fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+                    padding: "2px 7px",
+                  }}>{pkg.tag}</div>
+                )}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 4 }}>
+                  <span style={{
+                    fontFamily: '"Instrument Serif", Georgia, serif',
+                    fontSize: 20, color: isSelected ? "#fff" : "var(--fp-ink)",
+                  }}>{pkg.name}</span>
+                  <span style={{ fontSize: 11, color: isSelected ? "rgba(255,255,255,0.55)" : "var(--fp-ink-4)" }}>·</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "#fff" : "var(--fp-ink)" }}>
+                    {pkg.includedPhotos} fotek
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: isSelected ? "rgba(255,255,255,0.6)" : "var(--fp-ink-3)", marginBottom: 10 }}>
+                  {pkg.subtitle}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                  <span style={{
+                    fontFamily: '"Instrument Serif", Georgia, serif',
+                    fontSize: 22, color: isSelected ? "#fff" : "var(--fp-ink)",
+                  }}>{pkg.basePrice.toLocaleString("cs-CZ")} Kč</span>
+                  {isSelected && dreambox.size > 0 && (
+                    <span style={{ fontSize: 10.5, fontWeight: 600, color: remaining >= 0 ? "rgba(255,255,255,0.7)" : "#f4a261" }}>
+                      {remaining >= 0 ? `zbývá ${remaining}` : `+${-remaining} navíc`}
+                    </span>
+                  )}
+                </div>
+                {isSelected && (
+                  <div style={{
+                    marginTop: 8, fontSize: 10.5, color: "rgba(255,255,255,0.55)",
+                    borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 8,
+                  }}>
+                    Každá fotka navíc +{pkg.extraPhotoPrice} Kč
+                  </div>
+                )}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setPackage(null)}
+            style={{
+              all: "unset", cursor: "pointer", flex: "1 1 120px",
+              padding: "14px 16px",
+              border: !selectedPackageId ? "2px solid var(--fp-ink)" : "1.5px solid var(--fp-line)",
+              background: !selectedPackageId ? "var(--fp-ink)" : "transparent",
+              textAlign: "left", transition: "all 0.18s ease",
+            }}
+          >
+            <div style={{
+              fontFamily: '"Instrument Serif", Georgia, serif',
+              fontSize: 18, color: !selectedPackageId ? "#fff" : "var(--fp-ink)", marginBottom: 4,
+            }}>Bez balíčku</div>
+            <div style={{ fontSize: 11, color: !selectedPackageId ? "rgba(255,255,255,0.6)" : "var(--fp-ink-3)" }}>
+              Platím za každou fotku zvlášť
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* ── Photo grid ── */}
       {filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "64px 0", color: "var(--fp-ink-3)" }}>
@@ -344,7 +431,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
               boxShadow: "0 -4px 24px rgba(28,26,23,0.25)",
               overflow: "hidden",
             }}>
-              {/* Top row: heart icon + count + mini thumbs */}
+              {/* Top row: heart icon + count + package status + mini thumbs */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 10px" }}>
                 <div style={{
                   width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
@@ -355,7 +442,13 @@ export function DreamboxStep({ cx }: { cx: string }) {
                 </div>
                 <div style={{ color: "#fff", flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 15, fontWeight: 700 }}>Vybráno {dreambox.size}</span>
-                  <span style={{ fontSize: 12, opacity: 0.5, marginLeft: 6 }}>/ {photos.length}</span>
+                  {selectedPackageId ? (() => {
+                    const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
+                    const rem = pkg.includedPhotos - dreambox.size;
+                    return rem >= 0
+                      ? <span style={{ fontSize: 11, opacity: 0.65, marginLeft: 8 }}>· {rem === 0 ? "balíček plný" : `zbývá ${rem} z ${pkg.includedPhotos}`}</span>
+                      : <span style={{ fontSize: 11, color: "#f4a261", marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>;
+                  })() : <span style={{ fontSize: 12, opacity: 0.5, marginLeft: 6 }}>/ {photos.length}</span>}
                 </div>
                 {/* Max 3 mini thumbs */}
                 <div style={{ display: "flex" }}>
@@ -407,11 +500,30 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   <Heart size={16} strokeWidth={2} fill="#fff" />
                 </div>
                 <div style={{ color: "#fff" }}>
-                  <div style={{ fontSize: 11, opacity: 0.6 }}>Dreambox</div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>
-                    {dreambox.size} fotek vybráno
-                    <span style={{ opacity: 0.5, fontWeight: 400, marginLeft: 8 }}>· z {photos.length}</span>
-                  </div>
+                  {selectedPackageId ? (() => {
+                    const pkg = PACKAGES.find(p => p.id === selectedPackageId)!;
+                    const rem = pkg.includedPhotos - dreambox.size;
+                    return (
+                      <>
+                        <div style={{ fontSize: 11, opacity: 0.6 }}>Balíček {pkg.name} · {pkg.includedPhotos} fotek</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>
+                          {dreambox.size} vybráno
+                          {rem >= 0
+                            ? <span style={{ opacity: 0.6, fontWeight: 400, marginLeft: 8 }}>· zbývá {rem} fotek z balíčku</span>
+                            : <span style={{ color: "#f4a261", fontWeight: 400, marginLeft: 8 }}>· {-rem} navíc (+{(-rem) * pkg.extraPhotoPrice} Kč)</span>
+                          }
+                        </div>
+                      </>
+                    );
+                  })() : (
+                    <>
+                      <div style={{ fontSize: 11, opacity: 0.6 }}>Dreambox</div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>
+                        {dreambox.size} fotek vybráno
+                        <span style={{ opacity: 0.5, fontWeight: 400, marginLeft: 8 }}>· z {photos.length}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div style={{ display: "flex", marginLeft: 18 }}>
                   {[...dreambox].slice(0, 5).map((id, i) => {

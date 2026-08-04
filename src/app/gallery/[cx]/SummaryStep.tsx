@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS } from "@/lib/gallery-store";
+import { useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS, PACKAGES } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, FrameIcon, Printer, BookOpen } from "lucide-react";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
@@ -14,18 +14,33 @@ const PRICE_MAP: Record<string, number> = { retouch_only: 80, S: 120, M: 220, L:
 
 export function SummaryStep({ cx }: { cx: string }) {
   const router = useRouter();
-  const { photos, dreambox, configs, addons, globalNotes, setGlobalNotes, delivery, setStep, reset } = useGalleryStore();
+  const { photos, dreambox, configs, addons, globalNotes, setGlobalNotes, delivery, setStep, reset, selectedPackageId } = useGalleryStore();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const dreamboxPhotos = [...dreambox].map((id) => photos.find((p) => p.id === id)).filter(Boolean) as GalleryPhoto[];
-  const printSubtotal = dreamboxPhotos.reduce((s, p) => {
+  const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
+
+  // Package-aware print subtotal
+  let printSubtotal = activePkg ? activePkg.basePrice : 0;
+  const extraPhotosCount = activePkg ? Math.max(0, dreamboxPhotos.length - activePkg.includedPhotos) : 0;
+  dreamboxPhotos.forEach((p, photoIdx) => {
     const c = configs[p.id];
-    if (!c) return s;
-    return s + c.prints.reduce((ps, l) => ps + (PRICE_MAP[l.size] ?? 0) * (l.qty || 0), 0);
-  }, 0);
+    if (!c) return;
+    const isIncluded = activePkg ? photoIdx < activePkg.includedPhotos : false;
+    const isExtra = activePkg ? photoIdx >= activePkg.includedPhotos : false;
+    c.prints.forEach(l => {
+      if (!l.qty) return;
+      const price = PRICE_MAP[l.size] ?? 0;
+      if (l.size === "retouch_only") { printSubtotal += price * l.qty; return; }
+      if (isIncluded && l.size === "S") { printSubtotal += 0; return; }
+      if (isExtra && l.size === "S") { printSubtotal += activePkg!.extraPhotoPrice * l.qty; return; }
+      printSubtotal += price * l.qty;
+    });
+  });
+
   const addonsSubtotal = addons.reduce((s, a) => s + a.price, 0);
   const shipping = delivery === 2 ? 99 : 0;
   const subtotal = printSubtotal + addonsSubtotal;
@@ -83,6 +98,16 @@ export function SummaryStep({ cx }: { cx: string }) {
           <h1 style={{ margin: 0, fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, fontSize: 36, color: "var(--fp-ink)" }}>
             Rekapitulace <em>objednávky</em>
           </h1>
+          {activePkg && (
+            <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", background: "var(--fp-ink)", color: "#fff" }}>
+              <span style={{ fontSize: 12, fontWeight: 600 }}>Balíček {activePkg.name}</span>
+              <span style={{ fontSize: 11, opacity: 0.6 }}>·</span>
+              <span style={{ fontSize: 11, opacity: 0.7 }}>
+                {Math.min(dreamboxPhotos.length, activePkg.includedPhotos)}/{activePkg.includedPhotos} fotek
+                {extraPhotosCount > 0 && ` + ${extraPhotosCount} navíc`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -266,7 +291,23 @@ export function SummaryStep({ cx }: { cx: string }) {
         }}>
           <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22, marginBottom: 16 }}>Souhrn</div>
 
-          <SumLine label={`Fotografie · ${dreamboxPhotos.length} ks`} value={`${printSubtotal.toLocaleString("cs-CZ")} Kč`} />
+          {activePkg ? (
+            <>
+              <SumLine
+                label={`Balíček ${activePkg.name} · ${Math.min(dreamboxPhotos.length, activePkg.includedPhotos)} fotek`}
+                value={`${activePkg.basePrice.toLocaleString("cs-CZ")} Kč`}
+              />
+              {extraPhotosCount > 0 && (
+                <SumLine
+                  label={`${extraPhotosCount} ${extraPhotosCount === 1 ? "fotka" : extraPhotosCount < 5 ? "fotky" : "fotek"} navíc`}
+                  value={`+${(extraPhotosCount * activePkg.extraPhotoPrice).toLocaleString("cs-CZ")} Kč`}
+                  accent
+                />
+              )}
+            </>
+          ) : (
+            <SumLine label={`Fotografie · ${dreamboxPhotos.length} ks`} value={`${printSubtotal.toLocaleString("cs-CZ")} Kč`} />
+          )}
           {addons.map((a) => {
             const product = ADDON_PRODUCTS.find((p) => p.id === a.productId);
             return product ? <SumLine key={a.productId} label={product.name} value={`${a.price.toLocaleString("cs-CZ")} Kč`} /> : null;
@@ -332,11 +373,11 @@ export function SummaryStep({ cx }: { cx: string }) {
   );
 }
 
-function SumLine({ label, value }: { label: string; value: string }) {
+function SumLine({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13 }}>
-      <span style={{ color: "var(--fp-ink-2)" }}>{label}</span>
-      <span style={{ fontWeight: 500 }}>{value}</span>
+      <span style={{ color: accent ? "#c07030" : "var(--fp-ink-2)" }}>{label}</span>
+      <span style={{ fontWeight: 500, color: accent ? "#c07030" : undefined }}>{value}</span>
     </div>
   );
 }

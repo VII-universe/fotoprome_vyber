@@ -114,6 +114,46 @@ export function configToAspPayload(config: PhotoConfig): Record<string, string> 
   return fields;
 }
 
+// ── Balíčky ───────────────────────────────────────────────────────────────
+
+export interface Package {
+  id: string;
+  name: string;
+  subtitle: string;
+  tag?: string;
+  includedPhotos: number;  // počet fotek zahrnutých v ceně
+  basePrice: number;       // cena balíčku
+  extraPhotoPrice: number; // cena za každou fotku nad limit
+}
+
+export const PACKAGES: Package[] = [
+  {
+    id: "mini",
+    name: "Mini",
+    subtitle: "Pro první vzpomínky",
+    includedPhotos: 10,
+    basePrice: 990,
+    extraPhotoPrice: 60,
+  },
+  {
+    id: "standard",
+    name: "Standard",
+    subtitle: "Nejoblíbenější volba",
+    tag: "Doporučené",
+    includedPhotos: 20,
+    basePrice: 1690,
+    extraPhotoPrice: 50,
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    subtitle: "Kompletní příběh",
+    includedPhotos: 40,
+    basePrice: 2990,
+    extraPhotoPrice: 40,
+  },
+];
+
 // ── Addon (Krok 3) ─────────────────────────────────────────────────────────
 
 export type AddonProductId = "canvas" | "poster" | "photobook";
@@ -201,8 +241,11 @@ export interface GalleryState {
   delivery: 1 | 2;
   paper: 1 | 2;
 
+  selectedPackageId: string | null;
+
   // Actions
   setPhotos: (photos: GalleryPhoto[]) => void;
+  setPackage: (id: string | null) => void;
   toggleHeart: (pid: string, zone: "p" | "l", did?: string) => void;
   setDreamboxIds: (ids: Set<string>) => void;
   setConfig: (pid: string, config: Partial<PhotoConfig>) => void;
@@ -230,6 +273,7 @@ const defaultState = {
   coupon: "",
   delivery: 1 as const,
   paper: 1 as const,
+  selectedPackageId: null as string | null,
 };
 
 export const useGalleryStore = create<GalleryState>()(
@@ -308,6 +352,7 @@ export const useGalleryStore = create<GalleryState>()(
 
       setStep: (step) => set({ step }),
       setFilterMode: (filterMode) => set({ filterMode }),
+      setPackage: (id) => set({ selectedPackageId: id }),
       setGlobalNotes: (globalNotes) => set({ globalNotes }),
 
       upsertAddon: (item) =>

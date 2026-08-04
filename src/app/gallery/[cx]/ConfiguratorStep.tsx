@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX,
+  useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, PACKAGES,
   type ColorOption, type SizeOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
@@ -41,19 +41,43 @@ const SIZES: { id: SizeOption; label: string; sub: string; price: number }[] = [
 // PrintLine model: { color, size, qty }
 // Multi-format = multiple PrintLines per photo
 
-function calcTotal(dreamboxPhotos: GalleryPhoto[], configs: ReturnType<typeof useGalleryStore.getState>["configs"]) {
-  return dreamboxPhotos.reduce((s, p) => {
+function calcTotal(
+  dreamboxPhotos: GalleryPhoto[],
+  configs: ReturnType<typeof useGalleryStore.getState>["configs"],
+  selectedPackageId: string | null,
+) {
+  const pkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) : null;
+  let total = pkg ? pkg.basePrice : 0;
+
+  dreamboxPhotos.forEach((p, photoIdx) => {
     const c = configs[p.id];
-    if (!c) return s;
-    return s + c.prints.reduce((ps, line) => {
-      const price = SIZES.find((sz) => sz.id === line.size)?.price ?? 0;
-      return ps + price * (line.qty || 0);
-    }, 0);
-  }, 0);
+    if (!c) return;
+    const isIncluded = pkg ? photoIdx < pkg.includedPhotos : false;
+    const isExtra = pkg ? photoIdx >= pkg.includedPhotos : false;
+
+    for (const line of c.prints) {
+      if (!line.qty) continue;
+      const basePrice = SIZES.find(s => s.id === line.size)?.price ?? 0;
+      if (line.size === "retouch_only") {
+        total += basePrice * line.qty;
+      } else if (isIncluded && line.size === "S") {
+        // S print included in package — free
+        total += 0;
+      } else if (isExtra && line.size === "S") {
+        // Extra photo beyond package — use extraPhotoPrice per S print
+        total += pkg!.extraPhotoPrice * line.qty;
+      } else {
+        // M/L sizes always at normal price (for everyone)
+        total += basePrice * line.qty;
+      }
+    }
+  });
+
+  return total;
 }
 
 export function ConfiguratorStep({ cx }: { cx: string }) {
-  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart } = useGalleryStore();
+  const { photos, dreambox, configs, setConfig, setPrintLine, addPrintLine, removePrintLine, setStep, toggleHeart, selectedPackageId, setPackage } = useGalleryStore();
   const [saving, setSaving] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [menuPid, setMenuPid] = useState<string | null>(null);
@@ -108,7 +132,8 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
   const activeLine = prints[safeIdx];
 
-  const total = calcTotal(dreamboxPhotos, configs);
+  const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
+  const total = calcTotal(dreamboxPhotos, configs, selectedPackageId);
 
   async function saveAll() {
     setSaving(true);
@@ -179,6 +204,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         saving={saving}
         saveAll={saveAll}
         setStep={setStep}
+        selectedPackageId={selectedPackageId}
       />
     );
   }
@@ -196,17 +222,52 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         <StepDots active={1} />
       </div>
 
+      {/* ── Package status banner ── */}
+      {activePkg && (() => {
+        const used = dreamboxPhotos.length;
+        const rem = activePkg.includedPhotos - used;
+        const extra = Math.max(0, -rem);
+        return (
+          <div style={{
+            padding: "8px 16px",
+            background: extra > 0 ? "rgba(244,162,97,0.12)" : "var(--fp-accent-soft)",
+            borderBottom: "1px solid var(--fp-line)",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: extra > 0 ? "#c07030" : "var(--fp-accent)" }}>
+                Balíček {activePkg.name} · {activePkg.includedPhotos} fotek
+              </span>
+              <span style={{ fontSize: 11, color: "var(--fp-ink-3)" }}>·</span>
+              {rem >= 0
+                ? <span style={{ fontSize: 11, color: "var(--fp-ink-3)" }}>nevyčerpaný balíček, zbývají ještě {rem} {rem === 1 ? "fotka" : rem < 5 ? "fotky" : "fotek"}</span>
+                : <span style={{ fontSize: 11, color: "#c07030", fontWeight: 500 }}>{extra} {extra === 1 ? "fotka" : extra < 5 ? "fotky" : "fotek"} navíc · +{extra * activePkg.extraPhotoPrice} Kč</span>
+              }
+            </div>
+            <button
+              onClick={() => setPackage(null)}
+              style={{ all: "unset", cursor: "pointer", fontSize: 10.5, color: "var(--fp-ink-4)", textDecoration: "underline" }}
+            >
+              změnit balíček
+            </button>
+          </div>
+        );
+      })()}
+
       {/* ── Photo filmstrip ── */}
       <div style={{ background: "#ddd7cc", borderBottom: "1px solid var(--fp-line)" }}>
         <div
           className="no-scrollbar"
           style={{ display: "flex", gap: 4, overflowX: "auto", padding: "10px 12px", alignItems: "center" }}
         >
-          {dreamboxPhotos.map((p) => {
+          {dreamboxPhotos.map((p, photoIdx) => {
             const isActive = p.id === selectedPid;
             const thumbColor = configs[p.id]?.prints[0]?.color ?? "color";
             const lineCount = configs[p.id]?.prints?.filter(l => l.qty > 0).length ?? 0;
             const isMenuOpen = menuPid === p.id;
+            const pkgStatus = activePkg
+              ? photoIdx < activePkg.includedPhotos ? "included" : "extra"
+              : null;
             return (
               <div
                 key={p.id}
@@ -231,6 +292,19 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                     style={{ height: "100%", width: "auto", display: "block" }}
                   />
                 </button>
+                {/* Package badge */}
+                {pkgStatus && (
+                  <div style={{
+                    position: "absolute", bottom: 4, left: 4,
+                    fontSize: 9, fontWeight: 700, letterSpacing: "0.04em",
+                    padding: "2px 5px",
+                    background: pkgStatus === "included" ? "rgba(28,26,23,0.75)" : "rgba(244,162,97,0.92)",
+                    color: "#fff",
+                    pointerEvents: "none",
+                  }}>
+                    {pkgStatus === "included" ? "V BAL." : "+"}
+                  </div>
+                )}
                 {/* Options button — visible on hover via CSS */}
                 <button
                   className="filmstrip-menu-btn"
@@ -366,27 +440,34 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {(cfg?.prints ?? []).map((line, idx) => (
-                  <PrintLineRow
-                    key={idx}
-                    index={idx}
-                    isActive={safeIdx === idx}
-                    line={line}
-                    onActivate={() => setActivePrintIdx(idx)}
-                    onColorChange={(color) => {
-                      setPrintLine(selectedPid, idx, { color });
-                      setActivePrintIdx(idx); // aktivace při změně barvy
-                    }}
-                    onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
-                    onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-                    onRemove={() => {
-                      removePrintLine(selectedPid, idx);
-                      setActivePrintIdx(0);
-                    }}
-                    canRemove={(cfg?.prints?.length ?? 0) > 1}
-                    isFirst={idx === 0}
-                  />
-                ))}
+                {(cfg?.prints ?? []).map((line, idx) => {
+                  const pkgSt = activePkg
+                    ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                    : null;
+                  return (
+                    <PrintLineRow
+                      key={idx}
+                      index={idx}
+                      isActive={safeIdx === idx}
+                      line={line}
+                      onActivate={() => setActivePrintIdx(idx)}
+                      onColorChange={(color) => {
+                        setPrintLine(selectedPid, idx, { color });
+                        setActivePrintIdx(idx);
+                      }}
+                      onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
+                      onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+                      onRemove={() => {
+                        removePrintLine(selectedPid, idx);
+                        setActivePrintIdx(0);
+                      }}
+                      canRemove={(cfg?.prints?.length ?? 0) > 1}
+                      isFirst={idx === 0}
+                      packageStatus={pkgSt}
+                      extraPhotoPrice={activePkg?.extraPhotoPrice}
+                    />
+                  );
+                })}
               </div>
 
               <button
@@ -442,10 +523,25 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         }}>
           {/* Mezisoučet */}
           <div style={{ color: "#fff", paddingLeft: 6 }}>
-            <div style={{ fontSize: 11, opacity: 0.55 }}>Mezisoučet</div>
-            <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
-              {total.toLocaleString("cs-CZ")} Kč
-            </div>
+            {activePkg ? (
+              <>
+                <div style={{ fontSize: 11, opacity: 0.55 }}>
+                  Balíček {activePkg.name}
+                  {dreamboxPhotos.length > activePkg.includedPhotos &&
+                    ` + ${dreamboxPhotos.length - activePkg.includedPhotos} fotek navíc`}
+                </div>
+                <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
+                  {total.toLocaleString("cs-CZ")} Kč
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, opacity: 0.55 }}>Mezisoučet</div>
+                <div style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 22 }}>
+                  {total.toLocaleString("cs-CZ")} Kč
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
@@ -567,6 +663,7 @@ interface MobileConfiguratorLayoutProps {
   saving: boolean;
   saveAll: () => void;
   setStep: (s: GalleryStep) => void;
+  selectedPackageId: string | null;
 }
 
 function MobileConfiguratorLayout({
@@ -585,7 +682,9 @@ function MobileConfiguratorLayout({
   saving,
   saveAll,
   setStep,
+  selectedPackageId,
 }: MobileConfiguratorLayoutProps) {
+  const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const { configs, setConfig, setPrintLine, addPrintLine, removePrintLine } = useGalleryStore();
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -598,6 +697,25 @@ function MobileConfiguratorLayout({
           Konfigurace <em>tisku</em>
         </h1>
       </div>
+
+      {/* Package status — mobile */}
+      {activePkg && (() => {
+        const rem = activePkg.includedPhotos - dreamboxPhotos.length;
+        const extra = Math.max(0, -rem);
+        return (
+          <div style={{
+            marginBottom: 12, padding: "8px 12px",
+            background: extra > 0 ? "rgba(244,162,97,0.12)" : "var(--fp-accent-soft)",
+            border: "1px solid var(--fp-line)",
+            fontSize: 12, color: extra > 0 ? "#c07030" : "var(--fp-accent)",
+            fontWeight: 500,
+          }}>
+            {rem >= 0
+              ? `Balíček ${activePkg.name} · zbývají ${rem} fotky`
+              : `Balíček ${activePkg.name} · ${extra} fotky navíc (+${extra * activePkg.extraPhotoPrice} Kč)`}
+          </div>
+        );
+      })()}
 
       {/* Horizontal thumb strip */}
       <div className="no-scrollbar" style={{
@@ -682,27 +800,34 @@ function MobileConfiguratorLayout({
 
       {/* Print line cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-        {(cfg?.prints ?? []).map((line, idx) => (
-          <PrintLineRow
-            key={idx}
-            index={idx}
-            isActive={safeIdx === idx}
-            line={line}
-            onActivate={() => setActivePrintIdx(idx)}
-            onColorChange={(color) => {
-              setPrintLine(selectedPid, idx, { color });
-              setActivePrintIdx(idx);
-            }}
-            onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
-            onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
-            onRemove={() => {
-              removePrintLine(selectedPid, idx);
-              setActivePrintIdx(0);
-            }}
-            canRemove={(cfg?.prints?.length ?? 0) > 1}
-            isFirst={idx === 0}
-          />
-        ))}
+        {(cfg?.prints ?? []).map((line, idx) => {
+          const pkgSt = activePkg
+            ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+            : null;
+          return (
+            <PrintLineRow
+              key={idx}
+              index={idx}
+              isActive={safeIdx === idx}
+              line={line}
+              onActivate={() => setActivePrintIdx(idx)}
+              onColorChange={(color) => {
+                setPrintLine(selectedPid, idx, { color });
+                setActivePrintIdx(idx);
+              }}
+              onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
+              onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+              onRemove={() => {
+                removePrintLine(selectedPid, idx);
+                setActivePrintIdx(0);
+              }}
+              canRemove={(cfg?.prints?.length ?? 0) > 1}
+              isFirst={idx === 0}
+              packageStatus={pkgSt}
+              extraPhotoPrice={activePkg?.extraPhotoPrice}
+            />
+          );
+        })}
         <button
           onClick={() => addPrintLine(selectedPid)}
           style={{
@@ -827,11 +952,18 @@ interface PrintLineRowProps {
   onRemove: () => void;
   canRemove: boolean;
   isFirst: boolean;
+  packageStatus?: "included" | "extra" | null;
+  extraPhotoPrice?: number;
 }
 
-function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove }: PrintLineRowProps) {
-  const price     = SIZES.find((s) => s.id === line.size)?.price ?? 0;
-  const lineTotal = price * line.qty;
+function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove, packageStatus, extraPhotoPrice }: PrintLineRowProps) {
+  const basePrice = SIZES.find((s) => s.id === line.size)?.price ?? 0;
+  // Package-aware effective price per unit
+  const effectiveUnitPrice =
+    packageStatus === "included" && line.size === "S" ? 0 :
+    packageStatus === "extra"    && line.size === "S" ? (extraPhotoPrice ?? basePrice) :
+    basePrice;
+  const lineTotal = effectiveUnitPrice * line.qty;
   const colorDef  = COLORS.find((c) => c.id === line.color) ?? COLORS[0];
 
   return (
@@ -890,12 +1022,20 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {lineTotal > 0 && (
+          {packageStatus === "included" && line.size === "S" ? (
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fp-accent)", background: "var(--fp-accent-soft)", padding: "2px 8px" }}>
+              V balíčku · 0 Kč
+            </span>
+          ) : packageStatus === "extra" && line.size === "S" ? (
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#c07030", background: "rgba(244,162,97,0.15)", padding: "2px 8px" }}>
+              +{extraPhotoPrice} Kč / ks navíc
+            </span>
+          ) : lineTotal > 0 ? (
             <span style={{
               fontFamily: '"Instrument Serif", Georgia, serif',
               fontSize: 17, color: "var(--fp-ink)",
             }}>{lineTotal.toLocaleString("cs-CZ")} Kč</span>
-          )}
+          ) : null}
           {canRemove && (
             <button onClick={onRemove} title="Odstranit" style={{
               all: "unset", cursor: "pointer",
@@ -1027,7 +1167,9 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                     {s.sub}
                   </span>
                   <span style={{ fontSize: 10.5, fontWeight: 600, marginTop: 2, color: isSel ? "rgba(255,255,255,0.8)" : "var(--fp-ink-2)" }}>
-                    {s.price} Kč
+                    {packageStatus === "included" && s.id === "S" ? "0 Kč" :
+                     packageStatus === "extra"    && s.id === "S" ? `+${extraPhotoPrice} Kč` :
+                     `${s.price} Kč`}
                   </span>
                 </button>
               );
@@ -1062,10 +1204,13 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                 <span style={{ fontSize: 14, fontWeight: 700, color: "var(--fp-ink)" }}>
                   {line.qty} ks
                 </span>
-                {line.qty > 1 && (
+                {effectiveUnitPrice > 0 && line.qty >= 1 && (
                   <span style={{ fontSize: 12, color: "var(--fp-ink-3)" }}>
-                    · {(SIZES.find(s => s.id === line.size)?.price ?? 0) * line.qty} Kč
+                    · {effectiveUnitPrice * line.qty} Kč
                   </span>
+                )}
+                {effectiveUnitPrice === 0 && (
+                  <span style={{ fontSize: 11, color: "var(--fp-accent)", fontWeight: 600 }}>· 0 Kč</span>
                 )}
               </div>
 
