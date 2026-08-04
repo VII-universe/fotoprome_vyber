@@ -41,6 +41,8 @@ const SIZES: { id: SizeOption; label: string; sub: string; price: number }[] = [
 // PrintLine model: { color, size, qty }
 // Multi-format = multiple PrintLines per photo
 
+const S_PRICE = SIZES.find(s => s.id === "S")?.price ?? 120;
+
 function calcTotal(
   dreamboxPhotos: GalleryPhoto[],
   configs: ReturnType<typeof useGalleryStore.getState>["configs"],
@@ -61,13 +63,14 @@ function calcTotal(
       if (line.size === "retouch_only") {
         total += basePrice * line.qty;
       } else if (isIncluded && line.size === "S") {
-        // S print included in package — free
+        // S covered by package
         total += 0;
+      } else if (isIncluded) {
+        // M/L for included photo = upgrade delta (package covers the S base)
+        total += (basePrice - S_PRICE) * line.qty;
       } else if (isExtra && line.size === "S") {
-        // Extra photo beyond package — use extraPhotoPrice per S print
         total += pkg!.extraPhotoPrice * line.qty;
       } else {
-        // M/L sizes always at normal price (for everyone)
         total += basePrice * line.qty;
       }
     }
@@ -961,6 +964,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
   // Package-aware effective price per unit
   const effectiveUnitPrice =
     packageStatus === "included" && line.size === "S" ? 0 :
+    packageStatus === "included" && line.size !== "S" && line.size !== "retouch_only" ? basePrice - S_PRICE :
     packageStatus === "extra"    && line.size === "S" ? (extraPhotoPrice ?? basePrice) :
     basePrice;
   const lineTotal = effectiveUnitPrice * line.qty;
@@ -1026,9 +1030,16 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--fp-accent)", background: "var(--fp-accent-soft)", padding: "2px 8px" }}>
               V balíčku · 0 Kč
             </span>
+          ) : packageStatus === "included" && line.size !== "S" && line.size !== "retouch_only" ? (
+            <div style={{ textAlign: "right" }}>
+              <span style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 17, color: "var(--fp-ink)" }}>
+                {lineTotal.toLocaleString("cs-CZ")} Kč
+              </span>
+              <div style={{ fontSize: 10, color: "var(--fp-ink-3)", marginTop: 1 }}>upgrade z balíčku</div>
+            </div>
           ) : packageStatus === "extra" && line.size === "S" ? (
             <span style={{ fontSize: 11, fontWeight: 600, color: "#c07030", background: "rgba(244,162,97,0.15)", padding: "2px 8px" }}>
-              +{extraPhotoPrice} Kč / ks navíc
+              +{extraPhotoPrice} Kč / ks
             </span>
           ) : lineTotal > 0 ? (
             <span style={{
@@ -1167,9 +1178,13 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                     {s.sub}
                   </span>
                   <span style={{ fontSize: 10.5, fontWeight: 600, marginTop: 2, color: isSel ? "rgba(255,255,255,0.8)" : "var(--fp-ink-2)" }}>
-                    {packageStatus === "included" && s.id === "S" ? "0 Kč" :
-                     packageStatus === "extra"    && s.id === "S" ? `+${extraPhotoPrice} Kč` :
-                     `${s.price} Kč`}
+                    {packageStatus === "included" && s.id === "S"
+                      ? "0 Kč"
+                      : packageStatus === "included" && s.id !== "S" && s.id !== "retouch_only"
+                      ? `+${s.price - S_PRICE} Kč`
+                      : packageStatus === "extra" && s.id === "S"
+                      ? `+${extraPhotoPrice} Kč`
+                      : `${s.price} Kč`}
                   </span>
                 </button>
               );

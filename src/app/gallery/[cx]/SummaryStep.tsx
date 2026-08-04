@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 const BASE = "https://v1.fotoprome.cz";
 
 const PRICE_MAP: Record<string, number> = { retouch_only: 80, S: 120, M: 220, L: 480 };
+const S_PRICE = PRICE_MAP.S;
 
 export function SummaryStep({ cx }: { cx: string }) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export function SummaryStep({ cx }: { cx: string }) {
       const price = PRICE_MAP[l.size] ?? 0;
       if (l.size === "retouch_only") { printSubtotal += price * l.qty; return; }
       if (isIncluded && l.size === "S") { printSubtotal += 0; return; }
+      if (isIncluded) { printSubtotal += (price - S_PRICE) * l.qty; return; } // M/L: upgrade delta
       if (isExtra && l.size === "S") { printSubtotal += activePkg!.extraPhotoPrice * l.qty; return; }
       printSubtotal += price * l.qty;
     });
