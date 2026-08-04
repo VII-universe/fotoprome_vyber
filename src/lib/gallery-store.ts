@@ -68,10 +68,18 @@ export const FRAME_LABELS: Record<FrameOption, string> = {
 };
 
 export const RETOUCH_LABELS: Record<RetouchLevel, string> = {
-  none: "Bez retuše",
-  light: "Málo retuše",
+  none:   "Bez retuše",
+  light:  "Málo retuše",
   medium: "Středně",
-  heavy: "Hodně",
+  heavy:  "Hodně",
+};
+
+// Cena retuše na fotku (Kč)
+export const RETOUCH_PRICES: Record<RetouchLevel, number> = {
+  none:   0,
+  light:  30,
+  medium: 60,
+  heavy:  100,
 };
 
 // Map size → ASP A4/A5 field suffixes

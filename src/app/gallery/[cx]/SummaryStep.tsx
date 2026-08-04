@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS, PACKAGES,
-  RETOUCH_LABELS, type ColorOption, type SizeOption, type RetouchLevel,
+  RETOUCH_LABELS, RETOUCH_PRICES, type ColorOption, type SizeOption, type RetouchLevel,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, Pencil, Trash2, Plus, Minus, X, Check } from "lucide-react";
@@ -68,9 +68,12 @@ export function SummaryStep({ cx }: { cx: string }) {
     });
   });
 
+  const retouchUnitPrice = RETOUCH_PRICES[globalRetouchLevel];
+  const retouchTotal = retouchUnitPrice * dreamboxPhotos.length;
+
   const addonsSubtotal = addons.reduce((s, a) => s + a.price, 0);
   const shipping = delivery === 2 ? 99 : 0;
-  const subtotal = printSubtotal + addonsSubtotal;
+  const subtotal = printSubtotal + retouchTotal + addonsSubtotal;
   const total = subtotal + shipping;
 
   function removePhoto(photo: GalleryPhoto) {
@@ -482,7 +485,7 @@ export function SummaryStep({ cx }: { cx: string }) {
           </div>
 
           {/* Míra retuší */}
-          <RetouchSlider value={globalRetouchLevel} onChange={setGlobalRetouchLevel} />
+          <RetouchSlider value={globalRetouchLevel} onChange={setGlobalRetouchLevel} photoCount={dreamboxPhotos.length} />
 
           {/* Doplňky z Kroku 3 */}
           {addons.length > 0 && (
@@ -556,6 +559,12 @@ export function SummaryStep({ cx }: { cx: string }) {
             </>
           ) : (
             <SumLine label={`Fotografie · ${dreamboxPhotos.length} ks`} value={`${printSubtotal.toLocaleString("cs-CZ")} Kč`} />
+          )}
+          {retouchTotal > 0 && (
+            <SumLine
+              label={`Retuš · ${RETOUCH_LABELS[globalRetouchLevel]} · ${dreamboxPhotos.length} ${dreamboxPhotos.length === 1 ? "fotka" : dreamboxPhotos.length < 5 ? "fotky" : "fotek"} × ${retouchUnitPrice} Kč`}
+              value={`${retouchTotal.toLocaleString("cs-CZ")} Kč`}
+            />
           )}
           {addons.map((a) => {
             const product = ADDON_PRODUCTS.find((p) => p.id === a.productId);
@@ -646,8 +655,10 @@ const RETOUCH_DESCS: Record<RetouchLevel, string> = {
   heavy:  "Výrazné zpracování, stylizace",
 };
 
-function RetouchSlider({ value, onChange }: { value: RetouchLevel; onChange: (v: RetouchLevel) => void }) {
+function RetouchSlider({ value, onChange, photoCount }: { value: RetouchLevel; onChange: (v: RetouchLevel) => void; photoCount: number }) {
   const idx = RETOUCH_LEVELS.indexOf(value);
+  const unitPrice = RETOUCH_PRICES[value];
+  const total = unitPrice * photoCount;
 
   return (
     <div style={{ marginTop: 24 }}>
@@ -655,8 +666,20 @@ function RetouchSlider({ value, onChange }: { value: RetouchLevel; onChange: (v:
         <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--fp-ink-3)", textTransform: "uppercase", letterSpacing: "0.14em" }}>
           Míra retuší
         </div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fp-ink)" }}>
-          {RETOUCH_LABELS[value]}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--fp-ink)" }}>
+            {RETOUCH_LABELS[value]}
+          </div>
+          {unitPrice > 0 ? (
+            <div style={{ fontSize: 12, color: "var(--fp-ink-3)" }}>
+              {unitPrice} Kč / fotka
+              <span style={{ marginLeft: 8, fontWeight: 600, color: "var(--fp-ink)" }}>
+                = {total.toLocaleString("cs-CZ")} Kč
+              </span>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--fp-ink-4)" }}>zdarma</div>
+          )}
         </div>
       </div>
 
@@ -728,13 +751,30 @@ function RetouchSlider({ value, onChange }: { value: RetouchLevel; onChange: (v:
           ))}
         </div>
 
-        {/* Description */}
+        {/* Description + price breakdown */}
         <div style={{
-          marginTop: 12, padding: "9px 12px",
+          marginTop: 12, padding: "10px 14px",
           background: "var(--fp-bg)", border: "1px solid var(--fp-line)",
-          fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          flexWrap: "wrap",
         }}>
-          {RETOUCH_DESCS[value]}
+          <div style={{ fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic" }}>
+            {RETOUCH_DESCS[value]}
+          </div>
+          {unitPrice > 0 && (
+            <div style={{
+              fontSize: 11, color: "var(--fp-ink-3)",
+              display: "flex", gap: 4, alignItems: "center", flexShrink: 0,
+            }}>
+              <span>{photoCount} fotek</span>
+              <span style={{ opacity: 0.4 }}>×</span>
+              <span>{unitPrice} Kč</span>
+              <span style={{ opacity: 0.4 }}>=</span>
+              <span style={{ fontWeight: 700, color: "var(--fp-ink)", fontSize: 13 }}>
+                {total.toLocaleString("cs-CZ")} Kč
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
