@@ -50,33 +50,49 @@ function calcTotal(
 ) {
   const pkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) : null;
   let total = pkg ? pkg.basePrice : 0;
+  let globalLineIdx = 0;
 
-  dreamboxPhotos.forEach((p, photoIdx) => {
+  dreamboxPhotos.forEach((p) => {
     const c = configs[p.id];
     if (!c) return;
-    const isIncluded = pkg ? photoIdx < pkg.includedPhotos : false;
-    const isExtra = pkg ? photoIdx >= pkg.includedPhotos : false;
 
     for (const line of c.prints) {
-      if (!line.qty) continue;
-      const basePrice = SIZES.find(s => s.id === line.size)?.price ?? 0;
+      if (!line.qty) { globalLineIdx++; continue; }
+      const isIncluded = pkg ? globalLineIdx < pkg.includedPhotos : false;
+      const isExtra    = pkg ? globalLineIdx >= pkg.includedPhotos : false;
+      const basePrice  = SIZES.find(s => s.id === line.size)?.price ?? 0;
+
       if (line.size === "retouch_only") {
         total += basePrice * line.qty;
       } else if (isIncluded && line.size === "S") {
-        // S covered by package
         total += 0;
       } else if (isIncluded) {
-        // M/L for included photo = upgrade delta (package covers the S base)
         total += (basePrice - S_PRICE) * line.qty;
       } else if (isExtra && line.size === "S") {
         total += pkg!.extraPhotoPrice * line.qty;
       } else {
         total += basePrice * line.qty;
       }
+      globalLineIdx++;
     }
   });
 
   return total;
+
+}
+
+// Precompute cumulative line-start index for each photo
+function calcLineStarts(
+  dreamboxPhotos: GalleryPhoto[],
+  configs: ReturnType<typeof useGalleryStore.getState>["configs"],
+): number[] {
+  const starts: number[] = [];
+  let acc = 0;
+  for (const p of dreamboxPhotos) {
+    starts.push(acc);
+    acc += configs[p.id]?.prints.length ?? 0;
+  }
+  return starts;
 }
 
 export function ConfiguratorStep({ cx }: { cx: string }) {
@@ -139,6 +155,10 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const total = calcTotal(dreamboxPhotos, configs, selectedPackageId);
+  const lineStarts = calcLineStarts(dreamboxPhotos, configs);
+  const totalPrintLines = lineStarts.length > 0
+    ? (lineStarts[lineStarts.length - 1] ?? 0) + (configs[dreamboxPhotos[dreamboxPhotos.length - 1]?.id]?.prints.length ?? 0)
+    : 0;
 
   async function sharePhoto(photo: GalleryPhoto) {
     setSharing(true);
@@ -242,6 +262,8 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
         sharePhoto={sharePhoto}
         sharing={sharing}
         shareToast={shareToast}
+        lineStarts={lineStarts}
+        totalPrintLines={totalPrintLines}
       />
     );
   }
@@ -329,8 +351,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
       {/* ── Package status banner ── */}
       {activePkg && (() => {
-        const used = dreamboxPhotos.length;
-        const rem = activePkg.includedPhotos - used;
+        const rem = activePkg.includedPhotos - totalPrintLines;
         const extra = Math.max(0, -rem);
         return (
           <div style={{
@@ -341,12 +362,12 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 11.5, fontWeight: 600, color: extra > 0 ? "#c07030" : "var(--fp-accent)" }}>
-                Balíček {activePkg.name} · {activePkg.includedPhotos} fotek
+                Balíček {activePkg.name} · {activePkg.includedPhotos} formátů
               </span>
               <span style={{ fontSize: 11, color: "var(--fp-ink-3)" }}>·</span>
               {rem >= 0
-                ? <span style={{ fontSize: 11, color: "var(--fp-ink-3)" }}>nevyčerpaný balíček, zbývají ještě {rem} {rem === 1 ? "fotka" : rem < 5 ? "fotky" : "fotek"}</span>
-                : <span style={{ fontSize: 11, color: "#c07030", fontWeight: 500 }}>{extra} {extra === 1 ? "fotka" : extra < 5 ? "fotky" : "fotek"} navíc · +{extra * activePkg.extraPhotoPrice} Kč</span>
+                ? <span style={{ fontSize: 11, color: "var(--fp-ink-3)" }}>zbývají {rem} {rem === 1 ? "formát" : rem < 5 ? "formáty" : "formátů"}</span>
+                : <span style={{ fontSize: 11, color: "#c07030", fontWeight: 500 }}>{extra} {extra === 1 ? "formát" : extra < 5 ? "formáty" : "formátů"} navíc · +{extra * activePkg.extraPhotoPrice} Kč</span>
               }
             </div>
             <button
@@ -371,7 +392,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
             const isMenuOpen = menuPid === p.id;
             const isCarted = cartPhotos.has(p.id);
             const pkgStatus = activePkg
-              ? photoIdx < activePkg.includedPhotos ? "included" : "extra"
+              ? (lineStarts[photoIdx] ?? 0) < activePkg.includedPhotos ? "included" : "extra"
               : null;
             return (
               <div
@@ -610,8 +631,9 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                 {(cfg?.prints ?? []).filter(l => l.qty > 0).map((line, li) => {
                   const sizeDef = SIZES.find(s => s.id === line.size);
                   const colorDot = COLORS.find(c => c.id === line.color);
+                  const globalLi = (lineStarts[selectedIdx] ?? 0) + li;
                   const pkgSt = activePkg
-                    ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                    ? globalLi < activePkg.includedPhotos ? "included" as const : "extra" as const
                     : null;
                   const basePrice = sizeDef?.price ?? 0;
                   const unitPrice =
@@ -704,8 +726,9 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {(cfg?.prints ?? []).map((line, idx) => {
+                    const globalLi = (lineStarts[selectedIdx] ?? 0) + idx;
                     const pkgSt = activePkg
-                      ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                      ? globalLi < activePkg.includedPhotos ? "included" as const : "extra" as const
                       : null;
                     return (
                       <PrintLineRow
@@ -984,6 +1007,8 @@ interface MobileConfiguratorLayoutProps {
   sharePhoto: (photo: GalleryPhoto) => void;
   sharing: boolean;
   shareToast: boolean;
+  lineStarts: number[];
+  totalPrintLines: number;
 }
 
 function MobileConfiguratorLayout({
@@ -1004,6 +1029,8 @@ function MobileConfiguratorLayout({
   sharePhoto,
   sharing,
   shareToast,
+  lineStarts,
+  totalPrintLines,
 }: MobileConfiguratorLayoutProps) {
   const activePkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) ?? null : null;
   const { configs, setConfig, setPrintLine, addPrintLine, removePrintLine, cartPhotos, addToCart, removeFromCart, toggleHeart, photos } = useGalleryStore();
@@ -1032,7 +1059,7 @@ function MobileConfiguratorLayout({
 
       {/* Package status — mobile */}
       {activePkg && (() => {
-        const rem = activePkg.includedPhotos - dreamboxPhotos.length;
+        const rem = activePkg.includedPhotos - totalPrintLines;
         const extra = Math.max(0, -rem);
         return (
           <div style={{
@@ -1043,8 +1070,8 @@ function MobileConfiguratorLayout({
             fontWeight: 500,
           }}>
             {rem >= 0
-              ? `Balíček ${activePkg.name} · zbývají ${rem} fotky`
-              : `Balíček ${activePkg.name} · ${extra} fotky navíc (+${extra * activePkg.extraPhotoPrice} Kč)`}
+              ? `Balíček ${activePkg.name} · zbývají ${rem} ${rem === 1 ? "formát" : rem < 5 ? "formáty" : "formátů"}`
+              : `Balíček ${activePkg.name} · ${extra} ${extra === 1 ? "formát" : extra < 5 ? "formáty" : "formátů"} navíc (+${extra * activePkg.extraPhotoPrice} Kč)`}
           </div>
         );
       })()}
@@ -1193,8 +1220,9 @@ function MobileConfiguratorLayout({
 
           {(cfg?.prints ?? []).map((line, idx) => {
             const colorDef = COLORS.find(c => c.id === line.color) ?? COLORS[0];
+            const globalLi = (lineStarts[selectedIdx] ?? 0) + idx;
             const pkgSt = activePkg
-              ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+              ? globalLi < activePkg.includedPhotos ? "included" as const : "extra" as const
               : null;
             const baseP = SIZES.find(s => s.id === line.size)?.price ?? 0;
             const effP = pkgSt === "included" && line.size === "S" ? 0
@@ -1256,8 +1284,9 @@ function MobileConfiguratorLayout({
           {/* Print line cards */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
             {(cfg?.prints ?? []).map((line, idx) => {
+              const globalLi = (lineStarts[selectedIdx] ?? 0) + idx;
               const pkgSt = activePkg
-                ? selectedIdx < activePkg.includedPhotos ? "included" as const : "extra" as const
+                ? globalLi < activePkg.includedPhotos ? "included" as const : "extra" as const
                 : null;
               return (
                 <PrintLineRow

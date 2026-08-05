@@ -41,16 +41,27 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
   const pkg = selectedPackageId ? PACKAGES.find(p => p.id === selectedPackageId) : null;
   const effectiveIncluded = pkg ? pkg.includedPhotos + usedCredits : 0;
 
+  // Precompute global line starts (each print line consumes one package slot)
+  const lineStarts: number[] = [];
+  let lineAcc = 0;
+  for (const p of dreamboxPhotos) {
+    lineStarts.push(lineAcc);
+    lineAcc += configs[p.id]?.prints.length ?? 0;
+  }
+  const totalPrintLines = lineAcc;
+
   // total calculation
   let total = pkg ? pkg.basePrice : 0;
-  dreamboxPhotos.forEach((p, idx) => {
+  let globalLi = 0;
+  dreamboxPhotos.forEach((p) => {
     const c = configs[p.id];
     if (!c) return;
-    const isIncluded = pkg ? idx < effectiveIncluded : false;
-    const isExtra = pkg ? idx >= effectiveIncluded : false;
     for (const line of c.prints) {
-      if (!line.qty) continue;
+      if (!line.qty) { globalLi++; continue; }
+      const isIncluded = pkg ? globalLi < effectiveIncluded : false;
+      const isExtra    = pkg ? globalLi >= effectiveIncluded : false;
       total += photoLinePrice(line.size, isIncluded, isExtra, pkg?.extraPhotoPrice ?? 0) * line.qty;
+      globalLi++;
     }
   });
 
@@ -149,15 +160,19 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
 
           {dreamboxPhotos.map((photo, photoIdx) => {
             const c = configs[photo.id];
-            const isIncluded = pkg ? photoIdx < effectiveIncluded : false;
-            const isExtra = pkg ? photoIdx >= effectiveIncluded : false;
+            const photoLineStart = lineStarts[photoIdx] ?? 0;
+            // Photo badge: based on whether its first line is included
+            const firstLineIncluded = pkg ? photoLineStart < effectiveIncluded : false;
 
             let photoTotal = 0;
             if (c) {
-              for (const line of c.prints) {
-                if (!line.qty) continue;
-                photoTotal += photoLinePrice(line.size, isIncluded, isExtra, pkg?.extraPhotoPrice ?? 0) * line.qty;
-              }
+              c.prints.forEach((line, li) => {
+                if (!line.qty) return;
+                const gLi = photoLineStart + li;
+                const inc = pkg ? gLi < effectiveIncluded : false;
+                const ext = pkg ? gLi >= effectiveIncluded : false;
+                photoTotal += photoLinePrice(line.size, inc, ext, pkg?.extraPhotoPrice ?? 0) * line.qty;
+              });
             }
 
             return (
@@ -198,10 +213,10 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
                       textAlign: "center",
                       fontSize: 8, fontWeight: 700, letterSpacing: "0.06em",
                       padding: "2px 0",
-                      background: isIncluded ? "rgba(45,90,40,0.85)" : "rgba(180,100,0,0.85)",
+                      background: firstLineIncluded ? "rgba(45,90,40,0.85)" : "rgba(180,100,0,0.85)",
                       color: "#fff",
                     }}>
-                      {isIncluded ? "V BAL." : "NAVÍC"}
+                      {firstLineIncluded ? "V BAL." : "NAVÍC"}
                     </div>
                   )}
                 </div>
@@ -217,7 +232,10 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                       {c.prints.filter(l => l.qty > 0).map((line, li) => {
-                        const linePrice = photoLinePrice(line.size, isIncluded, isExtra, pkg?.extraPhotoPrice ?? 0);
+                        const gLi = photoLineStart + li;
+                        const inc = pkg ? gLi < effectiveIncluded : false;
+                        const ext = pkg ? gLi >= effectiveIncluded : false;
+                        const linePrice = photoLinePrice(line.size, inc, ext, pkg?.extraPhotoPrice ?? 0);
                         const linePriceTotal = linePrice * line.qty;
                         const sizeLabel = line.size === "retouch_only"
                           ? "Pouze retuš"
@@ -308,7 +326,7 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
               </div>
             )}
             {pkg && (() => {
-              const extraCount = Math.max(0, dreamboxPhotos.length - effectiveIncluded);
+              const extraCount = Math.max(0, totalPrintLines - effectiveIncluded);
               if (extraCount === 0) return null;
               const extraTotal = extraCount * pkg.extraPhotoPrice;
               return (
