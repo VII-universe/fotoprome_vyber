@@ -491,29 +491,24 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Justified gallery: všechny fotky stejná výška, šířka dle poměru 3:2 nebo 2:3 ──
+        // ── Justified gallery: všechny fotky stejná výška, šířka = přirozený poměr fotky ──
         (() => {
           const H = isMobile ? 180 : 270;
           const gap = isMobile ? 6 : 10;
           return (
             <div style={{ display: "flex", flexWrap: "wrap", gap, alignContent: "flex-start" }}>
-              {filtered.map((photo) => {
-                const isLandscape = landscapeIds.has(photo.id);
-                const W = Math.round(H * (isLandscape ? 3 / 2 : 2 / 3));
-                return (
-                  <div key={photo.id} style={{ flexShrink: 0, width: W, height: H }}>
-                    <NaturalTile
-                      photo={photo}
-                      selected={dreambox.has(photo.id)}
-                      saving={savingId === photo.id}
-                      onHeart={handleHeart}
-                      onZoom={setLightboxPhoto}
-                      fillHeight
-                      onOrientationDetect={handleOrientationDetect}
-                    />
-                  </div>
-                );
-              })}
+              {filtered.map((photo) => (
+                <JustifiedPhotoTile
+                  key={photo.id}
+                  photo={photo}
+                  height={H}
+                  selected={dreambox.has(photo.id)}
+                  saving={savingId === photo.id}
+                  onHeart={handleHeart}
+                  onZoom={setLightboxPhoto}
+                  onOrientationDetect={handleOrientationDetect}
+                />
+              ))}
             </div>
           );
         })()
@@ -816,7 +811,7 @@ function NaturalTile({ photo, selected, saving, onHeart, onZoom, fillHeight, onO
           display: "block",
           width: "100%",
           height: fillHeight ? "100%" : "auto",
-          objectFit: fillHeight ? "cover" : undefined,
+          objectFit: fillHeight ? "contain" : undefined,
         }}
       />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
@@ -875,6 +870,71 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
         backdropFilter: "blur(8px)", color: selected ? "#fff" : "var(--fp-ink)",
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "0 1px 4px rgba(0,0,0,0.2)", opacity: isActive ? 1 : 0.8,
+        transition: "all 0.18s ease",
+      }}>
+        <Heart size={16} strokeWidth={2} fill={selected ? "#fff" : "none"} />
+      </button>
+    </div>
+  );
+}
+
+// ── Justified gallery tile: img height fixed, width = natural ratio ────────
+
+interface JustifiedTileProps {
+  photo: GalleryPhoto;
+  height: number;
+  selected: boolean;
+  saving: boolean;
+  onHeart: (photo: GalleryPhoto, e: React.MouseEvent) => void;
+  onZoom: (photo: GalleryPhoto) => void;
+  onOrientationDetect?: (id: string) => void;
+}
+
+function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom, onOrientationDetect }: JustifiedTileProps) {
+  const [hovered, setHovered] = useState(false);
+  const isActive = hovered || selected;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onZoom(photo)}
+      style={{
+        flexShrink: 0,
+        height,
+        minWidth: Math.round(height * 2 / 3),
+        position: "relative",
+        overflow: "hidden",
+        cursor: "zoom-in",
+        background: "#ddd0bc",
+        outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
+        outlineOffset: 2,
+        transition: "outline 0.15s ease",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`${BASE}${photo.fullUrl}`}
+        alt={`Foto ${photo.num}`}
+        loading="lazy"
+        onLoad={onOrientationDetect ? (e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth > img.naturalHeight) onOrientationDetect(photo.id);
+        } : undefined}
+        style={{ display: "block", height, width: "auto" }}
+      />
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
+      {photo.isSuggested && (
+        <div style={{ position: "absolute", top: 8, left: 8, padding: "3px 8px", background: "rgba(255,255,255,0.92)", color: "var(--fp-ink)", fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 4, pointerEvents: "none" }}>
+          <Sparkles size={9} strokeWidth={2} />Doporučené
+        </div>
+      )}
+      <button onClick={(e) => onHeart(photo, e)} disabled={saving} style={{
+        all: "unset", cursor: "pointer", position: "absolute", top: 8, right: 8,
+        width: 34, height: 34,
+        background: selected ? "var(--fp-accent)" : "rgba(255,255,255,0.88)",
+        backdropFilter: "blur(8px)", color: selected ? "#fff" : "var(--fp-ink)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        opacity: isActive ? 1 : 0.75,
         transition: "all 0.18s ease",
       }}>
         <Heart size={16} strokeWidth={2} fill={selected ? "#fff" : "none"} />
