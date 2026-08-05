@@ -814,9 +814,9 @@ function NaturalTile({ photo, selected, saving, onHeart, onZoom, fillHeight, onO
         } : undefined}
         style={{
           display: "block",
-          width: fillHeight ? "100%" : "100%",
+          width: "100%",
           height: fillHeight ? "100%" : "auto",
-          objectFit: fillHeight ? "contain" : undefined,
+          objectFit: fillHeight ? "cover" : undefined,
         }}
       />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
