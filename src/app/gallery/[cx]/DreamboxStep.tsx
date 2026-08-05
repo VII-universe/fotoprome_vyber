@@ -92,7 +92,7 @@ function SmartGrid({
         return (
           <div key={photo.id} style={{
             gridColumn: isLandscape ? "span 2" : "span 1",
-            gridRow: isLandscape ? "span 2" : "span 3",
+            gridRow: "span 3",
             overflow: "hidden",
             position: "relative",
           }}>
@@ -491,12 +491,12 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Masonry výchozí: SmartGrid — portrait 1col×3rows, landscape 2col×2rows ──
+        // ── Masonry výchozí: SmartGrid — portrait 1col×3rows, landscape 2col×3rows (stejná výška) ──
         <SmartGrid
           photos={filtered}
           numCols={isMobile ? 2 : 4}
           gap={isMobile ? 6 : 10}
-          rowH={isMobile ? 120 : 150}
+          rowH={isMobile ? 100 : 150}
           landscapeIds={landscapeIds}
         >
           {(photo) => (
