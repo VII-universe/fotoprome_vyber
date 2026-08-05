@@ -523,7 +523,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                   key={`${selectedPhoto.id}-${previewColor}`}
                   src={`${BASE}${variantUrl(selectedPhoto.fullUrl, previewColor)}`}
                   alt={`Foto ${selectedPhoto.num}`}
-                  style={{ display: "block", width: "100%", objectFit: "cover" }}
+                  style={{ display: "block", width: "100%", height: "auto" }}
                 />
                 {/* Photo number — top left */}
                 <div style={{
@@ -1094,16 +1094,17 @@ function MobileConfiguratorLayout({
               onClick={() => selectPhoto(p.id)}
               style={{
                 all: "unset", cursor: "pointer", flexShrink: 0, position: "relative",
-                width: 52, height: 52, borderRadius: 0, overflow: "hidden",
+                height: 56, aspectRatio: "3/2", borderRadius: 0, overflow: "hidden",
                 border: isActive ? `2px solid ${pCarted ? "var(--fp-accent)" : "var(--fp-ink)"}` : "2px solid transparent",
                 background: "#e8d8c8",
                 boxSizing: "border-box",
+                display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
               <img
                 src={`${BASE}${variantUrl(p.thumbUrl, thumbColor)}`}
                 alt=""
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", display: "block" }}
               />
               {pCarted && (
                 <div style={{
@@ -1131,7 +1132,7 @@ function MobileConfiguratorLayout({
               key={`${selectedPhoto.id}-${previewColor}`}
               src={`${BASE}${variantUrl(selectedPhoto.fullUrl, previewColor)}`}
               alt={`Foto ${selectedPhoto.num}`}
-              style={{ display: "block", width: "100%", objectFit: "cover" }}
+              style={{ display: "block", width: "100%", height: "auto" }}
             />
             {/* Photo number — top left */}
             <div style={{
@@ -1608,7 +1609,7 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                         style={{
                           position: "absolute", inset: 0,
                           width: "100%", height: "100%",
-                          objectFit: "cover",
+                          objectFit: "contain",
                           display: "block",
                         }}
                       />

@@ -182,16 +182,15 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
                 borderBottom: "1px solid var(--fp-line)",
               }}>
                 {/* Thumbnail */}
-                <div style={{ position: "relative", flexShrink: 0 }}>
+                <div style={{ position: "relative", flexShrink: 0, width: 96, height: 64, background: "#e8d8c8", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/api/proxy?url=${encodeURIComponent(photo.thumbUrl)}`}
                     alt={`Foto #${photo.num}`}
                     style={{
-                      width: 64, height: 64,
-                      objectFit: "cover",
+                      maxWidth: "100%", maxHeight: "100%",
+                      width: "auto", height: "auto",
                       display: "block",
-                      background: "var(--fp-surface)",
                     }}
                   />
                   {/* Photo number badge */}

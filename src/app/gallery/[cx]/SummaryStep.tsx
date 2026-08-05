@@ -227,9 +227,9 @@ export function SummaryStep({ cx }: { cx: string }) {
                     background: isEditing ? "var(--fp-accent-soft)" : "var(--fp-bg)",
                   }}>
                     {/* Thumb */}
-                    <div style={{ width: 48, height: 48, flexShrink: 0, overflow: "hidden", background: "#e8d8c8", position: "relative" }}>
+                    <div style={{ width: 72, height: 48, flexShrink: 0, overflow: "hidden", background: "#e8d8c8", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={`${BASE}${p.thumbUrl}`} alt="" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", display: "block" }} />
                       {activePkg && (
                         <div style={{
                           position: "absolute", bottom: 0, left: 0, right: 0,
@@ -508,9 +508,9 @@ export function SummaryStep({ cx }: { cx: string }) {
                     <div key={addon.productId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--fp-bg)", border: "1px solid var(--fp-line)" }}>
                       <div style={{ display: "flex", flexShrink: 0 }}>
                         {previewPhotos.map((p, i) => (
-                          <div key={p.id} style={{ width: 36, height: 36, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid var(--fp-surface)" }}>
+                          <div key={p.id} style={{ width: 36, height: 36, overflow: "hidden", marginLeft: i === 0 ? 0 : -8, border: "2px solid var(--fp-surface)", background: "#e8d8c8", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`${BASE}${p.fullUrl}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={`${BASE}${p.fullUrl}`} alt="" style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", display: "block" }} />
                           </div>
                         ))}
                         {addon.photoIds.length > 3 && (
