@@ -491,21 +491,32 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Masonry výchozí: SmartGrid — portrait 1col×3rows, landscape 2col×3rows (stejná výška) ──
-        <SmartGrid
-          photos={filtered}
-          numCols={isMobile ? 2 : 4}
-          gap={isMobile ? 6 : 10}
-          rowH={isMobile ? 100 : 150}
-          landscapeIds={landscapeIds}
-        >
-          {(photo) => (
-            <NaturalTile key={photo.id} photo={photo}
-              selected={dreambox.has(photo.id)} saving={savingId === photo.id}
-              onHeart={handleHeart} onZoom={setLightboxPhoto}
-              fillHeight onOrientationDetect={handleOrientationDetect} />
-          )}
-        </SmartGrid>
+        // ── Justified gallery: všechny fotky stejná výška, šířka dle poměru 3:2 nebo 2:3 ──
+        (() => {
+          const H = isMobile ? 180 : 270;
+          const gap = isMobile ? 6 : 10;
+          return (
+            <div style={{ display: "flex", flexWrap: "wrap", gap, alignContent: "flex-start" }}>
+              {filtered.map((photo) => {
+                const isLandscape = landscapeIds.has(photo.id);
+                const W = Math.round(H * (isLandscape ? 3 / 2 : 2 / 3));
+                return (
+                  <div key={photo.id} style={{ flexShrink: 0, width: W, height: H }}>
+                    <NaturalTile
+                      photo={photo}
+                      selected={dreambox.has(photo.id)}
+                      saving={savingId === photo.id}
+                      onHeart={handleHeart}
+                      onZoom={setLightboxPhoto}
+                      fillHeight
+                      onOrientationDetect={handleOrientationDetect}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
       )}
 
       {/* ── Upsell nudge ── */}
