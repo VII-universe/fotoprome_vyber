@@ -147,7 +147,13 @@ function computeJustifiedRows(
   if (row.length > 0) {
     const sumR = row.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
     const naturalH = (containerWidth - (row.length - 1) * gap) / sumR;
-    rows.push({ photos: row, height: Math.round(Math.min(naturalH, targetHeight)) });
+    // Cap partial portrait rows to the same height as a full portrait row so they don't look oversized
+    let cap = targetHeight;
+    if (!rowLandscape && row.length < portraitMax) {
+      const fullSumR = portraitMax * (2 / 3);
+      cap = Math.round((containerWidth - (portraitMax - 1) * gap) / fullSumR);
+    }
+    rows.push({ photos: row, height: Math.round(Math.min(naturalH, cap)) });
   }
 
   // Merge any single-photo rows into the previous row (recalculate height).
