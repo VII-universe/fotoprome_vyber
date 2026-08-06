@@ -507,7 +507,6 @@ export function DreamboxStep({ cx }: { cx: string }) {
                   saving={savingId === photo.id}
                   onHeart={handleHeart}
                   onZoom={setLightboxPhoto}
-                  onOrientationDetect={handleOrientationDetect}
                 />
               ))}
             </div>
@@ -879,7 +878,10 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
   );
 }
 
-// ── Justified gallery tile: img height fixed, width = natural ratio ────────
+// ── Justified gallery tile ────────────────────────────────────────────────
+// Uses thumbUrl (small file) so all images load quickly without lazy.
+// Width is determined from the thumbnail's natural aspect ratio on load;
+// starts at portrait minimum so layout is stable before first paint.
 
 interface JustifiedTileProps {
   photo: GalleryPhoto;
@@ -888,11 +890,11 @@ interface JustifiedTileProps {
   saving: boolean;
   onHeart: (photo: GalleryPhoto, e: React.MouseEvent) => void;
   onZoom: (photo: GalleryPhoto) => void;
-  onOrientationDetect?: (id: string) => void;
 }
 
-function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom, onOrientationDetect }: JustifiedTileProps) {
+function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }: JustifiedTileProps) {
   const [hovered, setHovered] = useState(false);
+  const [tileWidth, setTileWidth] = useState(Math.round(height * 2 / 3)); // portrait default
   const isActive = hovered || selected;
   return (
     <div
@@ -901,8 +903,8 @@ function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom, 
       onClick={() => onZoom(photo)}
       style={{
         flexShrink: 0,
+        width: tileWidth,
         height,
-        minWidth: Math.round(height * 2 / 3),
         position: "relative",
         overflow: "hidden",
         cursor: "zoom-in",
@@ -914,14 +916,15 @@ function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom, 
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`${BASE}${photo.fullUrl}`}
+        src={`${BASE}${photo.thumbUrl}`}
         alt={`Foto ${photo.num}`}
-        loading="lazy"
-        onLoad={onOrientationDetect ? (e) => {
+        onLoad={(e) => {
           const img = e.currentTarget;
-          if (img.naturalWidth > img.naturalHeight) onOrientationDetect(photo.id);
-        } : undefined}
-        style={{ display: "block", height, width: "auto" }}
+          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+            setTileWidth(Math.round(height * img.naturalWidth / img.naturalHeight));
+          }
+        }}
+        style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
       />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
       {photo.isSuggested && (
