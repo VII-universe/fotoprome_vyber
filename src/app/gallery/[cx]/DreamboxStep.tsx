@@ -175,8 +175,10 @@ function computeJustifiedRows(
         addRow([...leftover, ...remaining.slice(0, needed)]);
         remaining = remaining.slice(needed);
       } else {
-        // Not enough to complete a 3-photo mixed row — flush leftover capped
-        addRow(leftover, true);
+        // Not enough for a 3-photo mixed row — combine all available into one row.
+        // This avoids two separate single-photo rows at the cost of a non-standard 2-photo row.
+        addRow([...leftover, ...remaining], true);
+        remaining = [];
       }
       leftover = [];
     }
@@ -193,6 +195,23 @@ function computeJustifiedRows(
 
   // Final leftover with no next segment to borrow from
   if (leftover.length > 0) addRow(leftover, true);
+
+  // Last-resort post-process: merge any remaining single-photo rows into the adjacent row.
+  // This handles edge cases (e.g. portrait count mod 3 == 1 with no landscape to borrow).
+  // The merged row may exceed normal maximums — cap height to avoid oversized tiles.
+  for (let i = result.length - 1; i >= 0; i--) {
+    if (result[i].photos.length === 1 && result.length > 1) {
+      const adjIdx = i > 0 ? i - 1 : 1;
+      const a = i > 0 ? i - 1 : 0;
+      const b = i > 0 ? i : 1;
+      const merged = [...result[a].photos, ...result[b].photos];
+      const dominantLand = merged.filter(isLand).length > merged.length / 2;
+      let h = calcH(merged);
+      h = Math.min(h, fullRowH(dominantLand));
+      result.splice(a, 2, { photos: merged, height: h });
+      if (i > 0) i--;
+    }
+  }
 
   return result;
 }
