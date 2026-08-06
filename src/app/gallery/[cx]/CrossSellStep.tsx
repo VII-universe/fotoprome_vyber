@@ -7,7 +7,7 @@ import {
 import { ConfigSheet } from "@/components/ConfigSheet";
 import {
   ArrowLeft, ArrowRight, Check, Edit2, FrameIcon, Printer, BookOpen,
-  Trash2, Sparkles, Plus,
+  Trash2, Sparkles, Plus, Cake,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import type { GalleryPhoto } from "@/lib/asp-parsers";
@@ -18,12 +18,14 @@ const PRODUCT_ICONS: Record<AddonProductId, React.ComponentType<{ size?: number;
   canvas:    FrameIcon,
   poster:    Printer,
   photobook: BookOpen,
+  dort:      Cake,
 };
 
 const PRODUCT_ACCENTS: Record<AddonProductId, string> = {
   canvas:    "#8a6a48",
   poster:    "#4a6a4f",
   photobook: "#5a4878",
+  dort:      "#b05070",
 };
 
 function addonsTotal(addons: AddonItem[]): number {

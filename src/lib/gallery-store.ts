@@ -67,6 +67,16 @@ export const FRAME_LABELS: Record<FrameOption, string> = {
   simple:      "Simple",
 };
 
+export const FRAME_PRICES: Record<FrameOption, number> = {
+  "":        0,
+  simple:    50,
+  photo:     50,
+  modern:    80,
+  retro:     80,
+  romantica: 80,
+  grunges:   80,
+};
+
 export const RETOUCH_LABELS: Record<RetouchLevel, string> = {
   none:   "Bez retuše",
   light:  "Málo retuše",
@@ -164,7 +174,7 @@ export const PACKAGES: Package[] = [
 
 // ── Addon (Krok 3) ─────────────────────────────────────────────────────────
 
-export type AddonProductId = "canvas" | "poster" | "photobook";
+export type AddonProductId = "canvas" | "poster" | "photobook" | "dort";
 
 export interface AddonVariant {
   id: string;
@@ -230,6 +240,19 @@ export const ADDON_PRODUCTS: {
       { id: "b_30x30_60", label: "30 × 30 cm · 60 stran", price: 2490 },
     ],
   },
+  {
+    id: "dort",
+    name: "Fotografie na dort",
+    description: "Jedlá fotografie na cukrovém papíru — bez chuti, bez vůně. Stačí přiložit na dort.",
+    tag: "Novinka",
+    priceFrom: 190,
+    multiPhoto: false,
+    variants: [
+      { id: "d_148x148", label: "14,8 × 14,8 cm",  price: 190 },
+      { id: "d_200x148", label: "20 × 14,8 cm",    price: 240 },
+      { id: "d_a4",      label: "A4 · 21 × 29,7 cm", price: 340 },
+    ],
+  },
 ];
 
 // ── Store ──────────────────────────────────────────────────────────────────
@@ -251,8 +274,11 @@ export interface GalleryState {
   paper: 1 | 2;
 
   selectedPackageId: string | null;
-  photoCredits: number;       // nevyčerpané fotky z předchozích objednávek
-  usedCredits: number;        // kredity použité v aktuální objednávce
+  photoCredits: number;
+  usedCredits: number;
+  cartPhotos: Set<string>;    // fotky potvrzené "do košíku" v konfigurátoru
+  discountCode: string;
+  discountAmount: number;    // Kč, kladné = sleva
 
   // Actions
   setPhotos: (photos: GalleryPhoto[]) => void;
@@ -260,6 +286,8 @@ export interface GalleryState {
   setPhotoCredits: (n: number) => void;
   setUsedCredits: (n: number) => void;
   setGlobalRetouchLevel: (level: RetouchLevel) => void;
+  addToCart: (pid: string) => void;
+  removeFromCart: (pid: string) => void;
   toggleHeart: (pid: string, zone: "p" | "l", did?: string) => void;
   setDreamboxIds: (ids: Set<string>) => void;
   setConfig: (pid: string, config: Partial<PhotoConfig>) => void;
@@ -272,6 +300,7 @@ export interface GalleryState {
   setJobId: (id: string) => void;
   upsertAddon: (item: AddonItem) => void;
   removeAddon: (id: string) => void;        // remove by item.id
+  setDiscount: (code: string, amount: number) => void;
   reset: () => void;
 }
 
@@ -291,6 +320,9 @@ const defaultState = {
   selectedPackageId: null as string | null,
   photoCredits: 0,
   usedCredits: 0,
+  cartPhotos: new Set<string>(),
+  discountCode: "",
+  discountAmount: 0,
 };
 
 export const useGalleryStore = create<GalleryState>()(
@@ -374,6 +406,12 @@ export const useGalleryStore = create<GalleryState>()(
       setUsedCredits: (usedCredits) => set({ usedCredits }),
       setGlobalNotes: (globalNotes) => set({ globalNotes }),
       setGlobalRetouchLevel: (globalRetouchLevel) => set({ globalRetouchLevel }),
+      addToCart: (pid) => set((s) => ({ cartPhotos: new Set([...s.cartPhotos, pid]) })),
+      removeFromCart: (pid) => set((s) => {
+        const next = new Set(s.cartPhotos);
+        next.delete(pid);
+        return { cartPhotos: next };
+      }),
 
       upsertAddon: (item) =>
         set((s) => ({
@@ -382,12 +420,14 @@ export const useGalleryStore = create<GalleryState>()(
             : [...s.addons, item],
         })),
 
+      setDiscount: (discountCode, discountAmount) => set({ discountCode, discountAmount }),
+
       removeAddon: (id) =>
         set((s) => ({
           addons: s.addons.filter((a) => a.id !== id),
         })),
 
-      reset: () => set({ ...defaultState, dreambox: new Set() }),
+      reset: () => set({ ...defaultState, dreambox: new Set(), cartPhotos: new Set() }),
     }),
     {
       name: "fp-gallery",

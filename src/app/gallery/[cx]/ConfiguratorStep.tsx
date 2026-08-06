@@ -3,7 +3,8 @@
 import { useState } from "react";
 import {
   useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, PACKAGES,
-  type ColorOption, type SizeOption,
+  FRAME_LABELS, FRAME_PRICES,
+  type ColorOption, type SizeOption, type FrameOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Link, Loader2, MoreHorizontal, Pencil, Plus, ShoppingCart, Sparkles, Trash2, ZoomIn, X, Check } from "lucide-react";
@@ -62,16 +63,17 @@ function calcTotal(
       const isExtra    = pkg ? globalLineIdx >= pkg.includedPhotos : false;
       const basePrice  = SIZES.find(s => s.id === line.size)?.price ?? 0;
 
+      const framePrice = FRAME_PRICES[line.frame ?? ""] ?? 0;
       if (line.size === "retouch_only") {
         total += basePrice * line.qty;
       } else if (isIncluded && line.size === "S") {
-        total += 0;
+        total += framePrice * line.qty;
       } else if (isIncluded) {
-        total += (basePrice - S_PRICE) * line.qty;
+        total += (basePrice - S_PRICE + framePrice) * line.qty;
       } else if (isExtra && line.size === "S") {
-        total += pkg!.extraPhotoPrice * line.qty;
+        total += (pkg!.extraPhotoPrice + framePrice) * line.qty;
       } else {
-        total += basePrice * line.qty;
+        total += (basePrice + framePrice) * line.qty;
       }
       globalLineIdx++;
     }
@@ -743,6 +745,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
                         }}
                         onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
                         onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+                        onFrameChange={(frame) => setPrintLine(selectedPid, idx, { frame })}
                         onRemove={() => {
                           removePrintLine(selectedPid, idx);
                           setActivePrintIdx(0);
@@ -1302,6 +1305,7 @@ function MobileConfiguratorLayout({
                   }}
                   onSizeChange={(size) => setPrintLine(selectedPid, idx, { size })}
                   onQtyChange={(qty) => setPrintLine(selectedPid, idx, { qty })}
+                  onFrameChange={(frame) => setPrintLine(selectedPid, idx, { frame })}
                   onRemove={() => {
                     removePrintLine(selectedPid, idx);
                     setActivePrintIdx(0);
@@ -1454,13 +1458,14 @@ function MobileConfiguratorLayout({
 // ── Single print line row ──
 
 interface PrintLineRowProps {
-  line: { color: ColorOption; size: SizeOption; qty: number };
+  line: { color: ColorOption; size: SizeOption; qty: number; frame?: FrameOption };
   index: number;
   isActive: boolean;
   onActivate: () => void;
   onColorChange: (c: ColorOption) => void;
   onSizeChange: (s: SizeOption) => void;
   onQtyChange: (q: number) => void;
+  onFrameChange: (f: FrameOption) => void;
   onRemove: () => void;
   canRemove: boolean;
   isFirst: boolean;
@@ -1469,7 +1474,7 @@ interface PrintLineRowProps {
   photoThumbUrl?: string;
 }
 
-function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onRemove, canRemove, packageStatus, extraPhotoPrice, photoThumbUrl }: PrintLineRowProps) {
+function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSizeChange, onQtyChange, onFrameChange, onRemove, canRemove, packageStatus, extraPhotoPrice, photoThumbUrl }: PrintLineRowProps) {
   const basePrice = SIZES.find((s) => s.id === line.size)?.price ?? 0;
   // Package-aware effective price per unit
   const effectiveUnitPrice =
@@ -1780,6 +1785,43 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
                   color: "var(--fp-ink-2)", fontSize: 18,
                   borderLeft: "1px solid var(--fp-line)",
                 }}>+</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Rámeček ── */}
+        {line.size !== "retouch_only" && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>
+              Rámeček
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {(Object.keys(FRAME_PRICES) as FrameOption[]).map((f) => {
+                const isSel = (line.frame ?? "") === f;
+                const price = FRAME_PRICES[f];
+                return (
+                  <button
+                    key={f}
+                    onClick={(e) => { e.stopPropagation(); onFrameChange(f); }}
+                    style={{
+                      all: "unset", cursor: "pointer",
+                      padding: "6px 10px", borderRadius: 0,
+                      border: isSel ? "2px solid var(--fp-ink)" : "1.5px solid var(--fp-line)",
+                      background: isSel ? "var(--fp-ink)" : "var(--fp-bg)",
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                      transition: "all 0.15s ease",
+                      minWidth: 52,
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5, fontWeight: 600, color: isSel ? "#fff" : "var(--fp-ink)", whiteSpace: "nowrap" }}>
+                      {f === "" ? "Bez" : FRAME_LABELS[f]}
+                    </span>
+                    <span style={{ fontSize: 10, color: isSel ? "rgba(255,255,255,0.65)" : "var(--fp-ink-3)", whiteSpace: "nowrap" }}>
+                      {price === 0 ? "zdarma" : `+${price} Kč/ks`}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

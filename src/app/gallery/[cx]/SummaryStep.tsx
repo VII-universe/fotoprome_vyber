@@ -39,11 +39,15 @@ export function SummaryStep({ cx }: { cx: string }) {
     globalRetouchLevel, setGlobalRetouchLevel, delivery,
     setStep, reset, selectedPackageId, usedCredits,
     setPrintLine, addPrintLine, removePrintLine, toggleHeart,
+    discountCode, discountAmount, setDiscount,
   } = useGalleryStore();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [editingPid, setEditingPid] = useState<string | null>(null);
+  const [voucherInput, setVoucherInput] = useState(discountCode);
+  const [voucherOpen, setVoucherOpen] = useState(!!discountCode);
+  const [voucherLoading, setVoucherLoading] = useState(false);
   const isMobile = useIsMobile();
 
   const dreamboxPhotos = [...dreambox].map((id) => photos.find((p) => p.id === id)).filter(Boolean) as GalleryPhoto[];
@@ -74,7 +78,24 @@ export function SummaryStep({ cx }: { cx: string }) {
   const addonsSubtotal = addons.reduce((s, a) => s + a.price, 0);
   const shipping = delivery === 2 ? 99 : 0;
   const subtotal = printSubtotal + retouchTotal + addonsSubtotal;
-  const total = subtotal + shipping;
+  const total = Math.max(0, subtotal + shipping - discountAmount);
+
+  async function applyVoucher() {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+    setVoucherLoading(true);
+    // TODO: replace with real API call
+    await new Promise((r) => setTimeout(r, 600));
+    const DEMO_CODES: Record<string, number> = { "VITEJ10": 10, "SLEVA100": 100, "FOTO200": 200 };
+    const amount = DEMO_CODES[code];
+    if (amount) {
+      setDiscount(code, amount);
+      setVoucherInput(code);
+    } else {
+      setDiscount("", 0);
+    }
+    setVoucherLoading(false);
+  }
 
   function removePhoto(photo: GalleryPhoto) {
     const c = configs[photo.id];
@@ -593,7 +614,82 @@ export function SummaryStep({ cx }: { cx: string }) {
             </div>
           </div>
 
+          {/* ── Slevový kód ── */}
+          <div style={{ marginTop: 8, marginBottom: 14 }}>
+            <button
+              onClick={() => setVoucherOpen((v) => !v)}
+              style={{
+                all: "unset", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6,
+                fontSize: 12, fontWeight: 600, color: "var(--fp-ink-3)",
+                padding: "6px 0", textDecoration: "underline", textUnderlineOffset: 3,
+              }}
+            >
+              {voucherOpen ? "− Skrýt slevový kód" : "+ Mám slevový kód / poukaz"}
+            </button>
+
+            {voucherOpen && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <input
+                  value={voucherInput}
+                  onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && applyVoucher()}
+                  placeholder="Zadejte kód"
+                  style={{
+                    flex: 1, height: 38, padding: "0 12px",
+                    border: discountAmount > 0 ? "1.5px solid #4a6a4f" : "1.5px solid var(--fp-line)",
+                    background: discountAmount > 0 ? "rgba(74,106,79,0.06)" : "var(--fp-bg)",
+                    fontSize: 13, fontWeight: 600, letterSpacing: "0.06em",
+                    outline: "none", borderRadius: 0, fontFamily: "inherit",
+                    color: discountAmount > 0 ? "#2d5a27" : "var(--fp-ink)",
+                  }}
+                />
+                <button
+                  onClick={applyVoucher}
+                  disabled={voucherLoading}
+                  style={{
+                    all: "unset", cursor: voucherLoading ? "wait" : "pointer",
+                    height: 38, padding: "0 14px", borderRadius: 0,
+                    background: "var(--fp-ink)", color: "#fff",
+                    fontSize: 12.5, fontWeight: 600, flexShrink: 0,
+                    opacity: voucherLoading ? 0.7 : 1,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {voucherLoading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : "Uplatnit"}
+                </button>
+              </div>
+            )}
+
+            {discountAmount > 0 && (
+              <div style={{
+                marginTop: 8, display: "flex", alignItems: "center", gap: 8,
+                fontSize: 12.5, color: "#2d5a27", fontWeight: 500,
+              }}>
+                <Check size={14} strokeWidth={2.5} />
+                Kód <strong>{discountCode}</strong> uplatněn · sleva −{discountAmount} Kč
+                <button
+                  onClick={() => { setDiscount("", 0); setVoucherInput(""); }}
+                  style={{ all: "unset", cursor: "pointer", color: "var(--fp-ink-4)", marginLeft: "auto" }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {voucherOpen && !voucherLoading && voucherInput.trim() && !discountAmount && discountCode !== voucherInput.trim() && (
+              <div style={{ marginTop: 6, fontSize: 11.5, color: "#c0392b" }}>
+                Kód nebyl rozpoznán. Zkuste ho zadat znovu.
+              </div>
+            )}
+          </div>
+
           <div style={{ height: 1, background: "var(--fp-line)", margin: "14px 0" }} />
+          {discountAmount > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, color: "var(--fp-ink-3)" }}>Sleva · kód {discountCode}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#2d5a27" }}>−{discountAmount.toLocaleString("cs-CZ")} Kč</span>
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 22 }}>
             <span style={{ fontSize: 13.5, fontWeight: 500 }}>Celkem</span>
             <span style={{ fontFamily: '"Instrument Serif", Georgia, serif', fontSize: 30 }}>{total.toLocaleString("cs-CZ")} Kč</span>
