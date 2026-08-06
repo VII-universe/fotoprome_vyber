@@ -122,14 +122,13 @@ function computeJustifiedRows(
   for (const photo of photos) {
     const ratio = ratios.get(photo.id) ?? (2 / 3);
     if (row.length > 0) {
-      // Width this photo would add at targetHeight, plus gap
       const newSumRatios = rowSumRatios + ratio;
-      const totalGaps    = row.length * gap; // gap between existing + new photo
+      const totalGaps    = row.length * gap;
       const projectedH   = (containerWidth - totalGaps) / newSumRatios;
-      // If adding it makes the row shorter than 60% of target, start new row
-      if (projectedH < targetHeight * 0.6) {
-        const totalGapsCurrent = (row.length - 1) * gap;
-        const height = Math.round((containerWidth - totalGapsCurrent) / rowSumRatios);
+      // Break row when height would drop below 78% of target — keeps rows tight
+      // and prevents portrait photos from being squashed alongside landscape ones.
+      if (projectedH < targetHeight * 0.78) {
+        const height = Math.round((containerWidth - (row.length - 1) * gap) / rowSumRatios);
         rows.push({ photos: row, height });
         row = [];
         rowSumRatios = 0;
@@ -139,9 +138,10 @@ function computeJustifiedRows(
     rowSumRatios += ratio;
   }
 
-  // Last (partial) row: use targetHeight, don't stretch
+  // Last partial row: cap height at targetHeight so it doesn't stretch too tall
   if (row.length > 0) {
-    rows.push({ photos: row, height: targetHeight });
+    const naturalH = Math.round((containerWidth - (row.length - 1) * gap) / rowSumRatios);
+    rows.push({ photos: row, height: Math.min(naturalH, targetHeight) });
   }
 
   return rows;
@@ -572,26 +572,29 @@ export function DreamboxStep({ cx }: { cx: string }) {
       ) : (
         // ── Justified gallery: řádky plní celou šířku ──
         (() => {
-          const targetH = isMobile ? 200 : 300;
+          const targetH = isMobile ? 240 : 420;
           const gap     = isMobile ? 6 : 10;
-          const W       = galleryWidth || 800;
+          const W       = galleryWidth > 0 ? galleryWidth : 900;
           const rows    = computeJustifiedRows(filtered, photoRatios, W, targetH, gap);
           return (
             <div style={{ display: "flex", flexDirection: "column", gap }}>
               {rows.map((row, ri) => (
                 <div key={ri} style={{ display: "flex", gap }}>
-                  {row.photos.map((photo) => (
-                    <JustifiedPhotoTile
-                      key={photo.id}
-                      photo={photo}
-                      width={Math.round(row.height * (photoRatios.get(photo.id) ?? 2 / 3))}
-                      height={Math.round(row.height)}
-                      selected={dreambox.has(photo.id)}
-                      saving={savingId === photo.id}
-                      onHeart={handleHeart}
-                      onZoom={setLightboxPhoto}
-                    />
-                  ))}
+                  {row.photos.map((photo) => {
+                    const ratio = photoRatios.get(photo.id) ?? (2 / 3);
+                    return (
+                      <JustifiedPhotoTile
+                        key={photo.id}
+                        photo={photo}
+                        width={Math.round(row.height * ratio)}
+                        height={Math.round(row.height)}
+                        selected={dreambox.has(photo.id)}
+                        saving={savingId === photo.id}
+                        onHeart={handleHeart}
+                        onZoom={setLightboxPhoto}
+                      />
+                    );
+                  })}
                 </div>
               ))}
             </div>
