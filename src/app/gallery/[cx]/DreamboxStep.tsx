@@ -150,6 +150,19 @@ function computeJustifiedRows(
     rows.push({ photos: row, height: Math.round(Math.min(naturalH, targetHeight)) });
   }
 
+  // Merge any single-photo rows into the previous row (recalculate height).
+  const recompH = (photos: GalleryPhoto[]) => {
+    const sumR = photos.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
+    return Math.round((containerWidth - (photos.length - 1) * gap) / sumR);
+  };
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (rows[i].photos.length === 1 && i > 0) {
+      const merged = [...rows[i - 1].photos, ...rows[i].photos];
+      rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
+      i--; // skip the row we just merged into
+    }
+  }
+
   return rows;
 }
 
