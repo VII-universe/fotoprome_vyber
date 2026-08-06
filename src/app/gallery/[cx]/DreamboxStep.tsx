@@ -105,110 +105,96 @@ function SmartGrid({
 }
 
 // ── Justified row layout ───────────────────────────────────────────────────
-// Groups photos into rows so each row fills containerWidth exactly.
-// Photos without a known ratio default to 2:3 portrait.
-
-// Portrait: portraitMax per row, Landscape: landscapeMax per row.
-// Rows are homogeneous — orientation change also flushes the row.
-// This gives portrait and landscape similar visual area.
+// Allowed row compositions:
+//   [PPP]  — 3 portrait  (standard)
+//   [LL]   — 2 landscape (standard)
+//   [PPL]  — 2 portrait + 1 landscape  (mixed, used when portrait segment ends with 2 leftover)
+//   [PLL]  — 1 portrait + 2 landscape  (mixed, used when either segment ends with 1 leftover)
+// Never: 1 photo alone, 2 portrait alone, 4+ portrait.
+// Remainder photos from one orientation segment are combined with the
+// start of the NEXT segment (different orientation) to form a mixed row.
 function computeJustifiedRows(
   photos: GalleryPhoto[],
   ratios: Map<string, number>,
   containerWidth: number,
-  targetHeight: number,
+  _targetHeight: number,
   gap: number,
   portraitMax: number,
   landscapeMax: number,
 ): { photos: GalleryPhoto[]; height: number }[] {
-  const isLandscape = (p: GalleryPhoto) => (ratios.get(p.id) ?? 2 / 3) > 1.0;
+  if (photos.length === 0) return [];
 
-  // Compute justified height for a set of photos filling containerWidth
-  const rowH = (ps: GalleryPhoto[]) => {
+  const isLand = (p: GalleryPhoto) => (ratios.get(p.id) ?? 2 / 3) > 1.0;
+
+  const calcH = (ps: GalleryPhoto[]) => {
     const sumR = ps.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
     return Math.round((containerWidth - (ps.length - 1) * gap) / sumR);
   };
 
-  // Height a full row of `count` same-orientation photos would have
-  const fullH = (count: number, land: boolean) => {
+  // Height of a complete pure row of that orientation (used to cap partial/mixed rows)
+  const fullRowH = (land: boolean) => {
+    const max = land ? landscapeMax : portraitMax;
     const avgR = land ? 3 / 2 : 2 / 3;
-    return Math.round((containerWidth - (count - 1) * gap) / (count * avgR));
+    return Math.round((containerWidth - (max - 1) * gap) / (max * avgR));
   };
 
-  // Step 1 — build rows, flushing on orientation change or count limit
-  const rows: { photos: GalleryPhoto[]; height: number; land: boolean }[] = [];
-  let row: GalleryPhoto[] = [];
-  let rowLand: boolean | null = null;
-
-  const flush = (partial = false) => {
-    const land = rowLand!;
-    const max = land ? landscapeMax : portraitMax;
-    let h = rowH(row);
-    // Cap partial rows so they don't appear oversized
-    if (partial && row.length < max) h = Math.min(h, fullH(max, land));
-    rows.push({ photos: row, height: h, land });
-    row = [];
-    rowLand = null;
-  };
-
-  for (const photo of photos) {
-    const land = isLandscape(photo);
-    const max = land ? landscapeMax : portraitMax;
-    if (row.length > 0 && (land !== rowLand || row.length >= max)) flush();
-    if (row.length === 0) rowLand = land;
-    row.push(photo);
+  // Group photos into contiguous same-orientation segments
+  const segments: { land: boolean; photos: GalleryPhoto[] }[] = [];
+  let si = 0;
+  while (si < photos.length) {
+    const land = isLand(photos[si]);
+    let ej = si;
+    while (ej < photos.length && isLand(photos[ej]) === land) ej++;
+    segments.push({ land, photos: photos.slice(si, ej) });
+    si = ej;
   }
-  if (row.length > 0) flush(true);
 
-  // Step 2 — eliminate single-photo rows by merging into an adjacent same-orientation row.
-  // Rules:
-  //   Landscape single → always merge (backward preferred, forward for rows[0]).
-  //     If merge would exceed landscapeMax, still merge but cap height.
-  //   Portrait single → merge only if result is exactly portraitMax (fills the row perfectly).
-  //     Otherwise cap height — never create a 2-portrait row.
-  //   Never merge rows of different orientations.
+  const result: { photos: GalleryPhoto[]; height: number }[] = [];
 
-  const merge = (i: number, j: number) => {
-    const merged = [...rows[i].photos, ...rows[j].photos];
-    const land = rows[i].land;
-    const max = land ? landscapeMax : portraitMax;
-    let h = rowH(merged);
-    if (merged.length > max) h = Math.min(h, fullH(max, land));
-    return { photos: merged, height: h, land };
+  const addRow = (ps: GalleryPhoto[], partial = false) => {
+    let h = calcH(ps);
+    if (partial) {
+      // Cap to full-row height so partial rows don't appear oversized
+      const dominantLand = ps.filter(isLand).length >= ps.length / 2;
+      h = Math.min(h, fullRowH(dominantLand));
+    }
+    result.push({ photos: ps, height: h });
   };
 
-  for (let i = rows.length - 1; i >= 1; i--) {
-    if (rows[i].photos.length !== 1) continue;
-    const prev = rows[i - 1];
-    if (rows[i].land !== prev.land) {
-      // Different orientations — just cap height
-      rows[i] = { ...rows[i], height: Math.min(rows[i].height, fullH(rows[i].land ? landscapeMax : portraitMax, rows[i].land)) };
-      continue;
-    }
-    if (!rows[i].land) {
-      // Portrait: only merge when result is exactly portraitMax
-      if (prev.photos.length === portraitMax - 1) {
-        rows.splice(i - 1, 2, merge(i - 1, i));
-        i--;
+  let leftover: GalleryPhoto[] = [];
+
+  for (const seg of segments) {
+    const max = seg.land ? landscapeMax : portraitMax;
+    let remaining = [...seg.photos];
+
+    // Consume leftover from the previous (different-orientation) segment.
+    // Mixed rows are always exactly 3 photos: leftover.length + needed = 3.
+    if (leftover.length > 0) {
+      const needed = 3 - leftover.length;
+      if (remaining.length >= needed) {
+        addRow([...leftover, ...remaining.slice(0, needed)]);
+        remaining = remaining.slice(needed);
       } else {
-        rows[i] = { ...rows[i], height: Math.min(rows[i].height, fullH(portraitMax, false)) };
+        // Not enough to complete a 3-photo mixed row — flush leftover capped
+        addRow(leftover, true);
       }
-    } else {
-      // Landscape: always merge backward
-      rows.splice(i - 1, 2, merge(i - 1, i));
-      i--;
+      leftover = [];
     }
+
+    // Emit full rows
+    while (remaining.length >= max) {
+      addRow(remaining.slice(0, max));
+      remaining = remaining.slice(max);
+    }
+
+    // Remainder carries to the next segment as leftover for a mixed row
+    if (remaining.length > 0) leftover = remaining;
   }
 
-  // rows[0] single: try forward merge (same orientation landscape only)
-  if (rows.length >= 2 && rows[0].photos.length === 1) {
-    if (rows[0].land && rows[1].land) {
-      rows.splice(0, 2, merge(0, 1));
-    } else {
-      rows[0] = { ...rows[0], height: Math.min(rows[0].height, fullH(rows[0].land ? landscapeMax : portraitMax, rows[0].land)) };
-    }
-  }
+  // Final leftover with no next segment to borrow from
+  if (leftover.length > 0) addRow(leftover, true);
 
-  return rows;
+  return result;
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
