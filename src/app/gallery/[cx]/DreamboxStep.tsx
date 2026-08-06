@@ -879,9 +879,9 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
 }
 
 // ── Justified gallery tile ────────────────────────────────────────────────
-// Uses thumbUrl (small file) so all images load quickly without lazy.
-// Width is determined from the thumbnail's natural aspect ratio on load;
-// starts at portrait minimum so layout is stable before first paint.
+// Displays fullUrl at full quality. Width is pre-detected by loading the
+// lightweight thumbUrl in a background Image object, so the container has
+// the correct aspect-ratio before the full image paints.
 
 interface JustifiedTileProps {
   photo: GalleryPhoto;
@@ -894,8 +894,19 @@ interface JustifiedTileProps {
 
 function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }: JustifiedTileProps) {
   const [hovered, setHovered] = useState(false);
-  const [tileWidth, setTileWidth] = useState(Math.round(height * 2 / 3)); // portrait default
+  const [tileWidth, setTileWidth] = useState(Math.round(height * 2 / 3)); // portrait until thumb detected
   const isActive = hovered || selected;
+
+  useEffect(() => {
+    const img = new window.Image();
+    img.onload = () => {
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setTileWidth(Math.round(height * img.naturalWidth / img.naturalHeight)); // eslint-disable-line react-hooks/set-state-in-effect
+      }
+    };
+    img.src = `${BASE}${photo.thumbUrl}`;
+  }, [photo.thumbUrl, height]);
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -911,19 +922,14 @@ function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }
         background: "#ddd0bc",
         outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 2,
-        transition: "outline 0.15s ease",
+        transition: "width 0.15s ease, outline 0.15s ease",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`${BASE}${photo.thumbUrl}`}
+        src={`${BASE}${photo.fullUrl}`}
         alt={`Foto ${photo.num}`}
-        onLoad={(e) => {
-          const img = e.currentTarget;
-          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-            setTileWidth(Math.round(height * img.naturalWidth / img.naturalHeight));
-          }
-        }}
+        loading="lazy"
         style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
       />
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: isActive ? "linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.28) 100%)" : "transparent", transition: "background 0.2s" }} />
