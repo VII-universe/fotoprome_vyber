@@ -134,6 +134,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDreamboxOrder((prev) => {
       const existing = new Set(prev);
       const added    = [...dreambox].filter((id) => !existing.has(id));

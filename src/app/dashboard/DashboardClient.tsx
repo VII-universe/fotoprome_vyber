@@ -34,7 +34,7 @@ export function DashboardClient() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setDateStr(new Date().toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" }));
+    setDateStr(new Date().toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" })); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   useEffect(() => {

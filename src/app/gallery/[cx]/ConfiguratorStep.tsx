@@ -678,7 +678,7 @@ export function ConfiguratorStep({ cx }: { cx: string }) {
 
               {cfg?.notes && (
                 <div style={{ padding: "8px 12px", background: "var(--fp-bg)", border: "1px solid var(--fp-line)", fontSize: 12, color: "var(--fp-ink-3)", fontStyle: "italic", marginBottom: 16 }}>
-                  „{cfg.notes}"
+                  „{cfg.notes}&quot;
                 </div>
               )}
 

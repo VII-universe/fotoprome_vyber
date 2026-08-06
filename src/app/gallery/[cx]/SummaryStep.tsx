@@ -244,7 +244,7 @@ export function SummaryStep({ cx }: { cx: string }) {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: "ui-monospace, monospace", fontSize: 11, color: "var(--fp-ink-3)" }}>#{p.num}</div>
-                      {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}"</div>}
+                      {c?.notes && <div style={{ fontSize: 11, color: "var(--fp-ink-3)", marginTop: 2, fontStyle: "italic" }}>„{c.notes}&quot;</div>}
                       {prints.filter(l => l.qty > 0).length === 0 && (
                         <div style={{ fontSize: 12, color: "var(--fp-ink-4)", marginTop: 2 }}>Nekonfigurováno</div>
                       )}
