@@ -108,40 +108,43 @@ function SmartGrid({
 // Groups photos into rows so each row fills containerWidth exactly.
 // Photos without a known ratio default to 2:3 portrait.
 
+// Max 2 photos per row — portrait rows come out ~2× taller than landscape rows,
+// which is what gives portrait photos their proper visual weight.
+// minHeight guards against very flat rows on narrow containers (mobile landscape).
 function computeJustifiedRows(
   photos: GalleryPhoto[],
   ratios: Map<string, number>,
   containerWidth: number,
-  targetHeight: number,
+  targetHeight: number, // used only to cap the last partial row
   gap: number,
+  maxPerRow = 2,
+  minHeight = 160,
 ): { photos: GalleryPhoto[]; height: number }[] {
   const rows: { photos: GalleryPhoto[]; height: number }[] = [];
   let row: GalleryPhoto[] = [];
   let rowSumRatios = 0;
 
+  const flush = () => {
+    const h = Math.round((containerWidth - (row.length - 1) * gap) / rowSumRatios);
+    rows.push({ photos: row, height: h });
+    row = [];
+    rowSumRatios = 0;
+  };
+
   for (const photo of photos) {
     const ratio = ratios.get(photo.id) ?? (2 / 3);
     if (row.length > 0) {
-      const newSumRatios = rowSumRatios + ratio;
-      const totalGaps    = row.length * gap;
-      const projectedH   = (containerWidth - totalGaps) / newSumRatios;
-      // Break row when height would drop below 78% of target — keeps rows tight
-      // and prevents portrait photos from being squashed alongside landscape ones.
-      if (projectedH < targetHeight * 0.78) {
-        const height = Math.round((containerWidth - (row.length - 1) * gap) / rowSumRatios);
-        rows.push({ photos: row, height });
-        row = [];
-        rowSumRatios = 0;
-      }
+      const projectedH = (containerWidth - row.length * gap) / (rowSumRatios + ratio);
+      if (row.length >= maxPerRow || projectedH < minHeight) flush();
     }
     row.push(photo);
     rowSumRatios += ratio;
   }
 
-  // Last partial row: cap height at targetHeight so it doesn't stretch too tall
+  // Last partial row — cap height so a single photo doesn't fill the whole viewport
   if (row.length > 0) {
-    const naturalH = Math.round((containerWidth - (row.length - 1) * gap) / rowSumRatios);
-    rows.push({ photos: row, height: Math.min(naturalH, targetHeight) });
+    const naturalH = (containerWidth - (row.length - 1) * gap) / rowSumRatios;
+    rows.push({ photos: row, height: Math.round(Math.min(naturalH, targetHeight)) });
   }
 
   return rows;
@@ -572,10 +575,11 @@ export function DreamboxStep({ cx }: { cx: string }) {
       ) : (
         // ── Justified gallery: řádky plní celou šířku ──
         (() => {
-          const targetH = isMobile ? 240 : 420;
-          const gap     = isMobile ? 6 : 10;
-          const W       = galleryWidth > 0 ? galleryWidth : 900;
-          const rows    = computeJustifiedRows(filtered, photoRatios, W, targetH, gap);
+          const targetH   = isMobile ? 320 : 520; // cap for last partial row only
+          const gap       = isMobile ? 6 : 10;
+          const minH      = isMobile ? 120 : 200; // prevents flat landscape rows on mobile
+          const W         = galleryWidth > 0 ? galleryWidth : 900;
+          const rows      = computeJustifiedRows(filtered, photoRatios, W, targetH, gap, 2, minH);
           return (
             <div style={{ display: "flex", flexDirection: "column", gap }}>
               {rows.map((row, ri) => (
