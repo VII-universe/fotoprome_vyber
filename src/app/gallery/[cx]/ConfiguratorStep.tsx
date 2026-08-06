@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   useGalleryStore, COLOR_LABELS, COLOR_URL_SUFFIX, PACKAGES,
-  FRAME_LABELS, FRAME_PRICES,
+  FRAME_LABELS, FRAME_PRICES, FRAME_COLORS,
   type ColorOption, type SizeOption, type FrameOption,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
@@ -1789,36 +1789,67 @@ function PrintLineRow({ line, index, isActive, onActivate, onColorChange, onSize
           </div>
         )}
 
-        {/* ── Rámeček ── */}
+        {/* ── Fyzický rám ── */}
         {line.size !== "retouch_only" && (
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 8 }}>
-              Rámeček
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--fp-ink-4)", textTransform: "uppercase", letterSpacing: "0.15em" }}>
+                Fyzický rám
+              </div>
+              <div style={{ fontSize: 10, color: "var(--fp-ink-4)" }}>kolem výtisku</div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {(Object.keys(FRAME_PRICES) as FrameOption[]).map((f) => {
                 const isSel = (line.frame ?? "") === f;
                 const price = FRAME_PRICES[f];
+                const color = FRAME_COLORS[f];
                 return (
                   <button
                     key={f}
                     onClick={(e) => { e.stopPropagation(); onFrameChange(f); }}
+                    title={FRAME_LABELS[f]}
                     style={{
                       all: "unset", cursor: "pointer",
-                      padding: "6px 10px", borderRadius: 0,
-                      border: isSel ? "2px solid var(--fp-ink)" : "1.5px solid var(--fp-line)",
-                      background: isSel ? "var(--fp-ink)" : "var(--fp-bg)",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                      transition: "all 0.15s ease",
-                      minWidth: 52,
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                     }}
                   >
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: isSel ? "#fff" : "var(--fp-ink)", whiteSpace: "nowrap" }}>
-                      {f === "" ? "Bez" : FRAME_LABELS[f]}
-                    </span>
-                    <span style={{ fontSize: 10, color: isSel ? "rgba(255,255,255,0.65)" : "var(--fp-ink-3)", whiteSpace: "nowrap" }}>
-                      {price === 0 ? "zdarma" : `+${price} Kč/ks`}
-                    </span>
+                    <div style={{
+                      width: 38, height: 38,
+                      border: isSel
+                        ? "3px solid var(--fp-accent)"
+                        : "1.5px solid var(--fp-line)",
+                      background: f === "" ? "var(--fp-bg)" : color,
+                      boxShadow: isSel ? "0 0 0 2px var(--fp-accent-soft)" : "none",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.15s ease",
+                      position: "relative", overflow: "hidden",
+                    }}>
+                      {f === "" && (
+                        /* diagonal strikethrough for "no frame" */
+                        <svg width="38" height="38" style={{ position: "absolute", inset: 0 }}>
+                          <line x1="6" y1="32" x2="32" y2="6" stroke="var(--fp-line)" strokeWidth="1.5" />
+                        </svg>
+                      )}
+                      {isSel && (
+                        <div style={{
+                          width: 16, height: 16, borderRadius: "50%",
+                          background: f === "" ? "var(--fp-accent)" : "rgba(255,255,255,0.85)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 9, fontWeight: 800,
+                          color: f === "" ? "#fff" : "var(--fp-accent)",
+                        }}>✓</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: isSel ? 700 : 400,
+                        color: isSel ? "var(--fp-accent)" : "var(--fp-ink-2)",
+                        whiteSpace: "nowrap",
+                      }}>{FRAME_LABELS[f]}</span>
+                      <span style={{ fontSize: 9.5, color: "var(--fp-ink-4)", whiteSpace: "nowrap" }}>
+                        {price === 0 ? "zdarma" : `+${price} Kč`}
+                      </span>
+                    </div>
                   </button>
                 );
               })}

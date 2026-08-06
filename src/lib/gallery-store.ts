@@ -9,8 +9,8 @@ export type ColorOption = "color" | "art_color" | "bw" | "sepia" | "antique" | "
 export type SizeOption = "S" | "M" | "L" | "retouch_only";
 export type RetouchLevel = "none" | "light" | "medium" | "heavy";
 
-// Advanced options
-export type FrameOption = "" | "grunges" | "modern" | "photo" | "retro" | "romantica" | "simple";
+// Physical frame options — ordered around the print
+export type FrameOption = "" | "white" | "black" | "natural" | "dark" | "silver";
 
 export interface PhotoConfig {
   pid: string;
@@ -58,23 +58,31 @@ export const COLOR_URL_SUFFIX: Record<ColorOption, string> = {
 };
 
 export const FRAME_LABELS: Record<FrameOption, string> = {
-  "":          "Bez rámečku",
-  grunges:     "Grunges",
-  modern:      "Modern",
-  photo:       "Photo",
-  retro:       "Retro",
-  romantica:   "Romantica",
-  simple:      "Simple",
+  "":       "Bez rámu",
+  white:    "Bílý",
+  black:    "Černý",
+  natural:  "Přírodní dřevo",
+  dark:     "Tmavé dřevo",
+  silver:   "Stříbrný",
+};
+
+// Color swatch for each physical frame material
+export const FRAME_COLORS: Record<FrameOption, string> = {
+  "":       "transparent",
+  white:    "#f5f3ef",
+  black:    "#1c1a17",
+  natural:  "#c8a06a",
+  dark:     "#5a3820",
+  silver:   "#b8bcc4",
 };
 
 export const FRAME_PRICES: Record<FrameOption, number> = {
-  "":        0,
-  simple:    50,
-  photo:     50,
-  modern:    80,
-  retro:     80,
-  romantica: 80,
-  grunges:   80,
+  "":       0,
+  white:    79,
+  black:    79,
+  natural:  129,
+  dark:     129,
+  silver:   99,
 };
 
 export const RETOUCH_LABELS: Record<RetouchLevel, string> = {
