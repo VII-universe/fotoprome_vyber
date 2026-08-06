@@ -169,32 +169,26 @@ function computeJustifiedRows(
   };
   for (let i = rows.length - 1; i >= 0; i--) {
     if (rows[i].photos.length === 1 && i > 0) {
-      const prev = rows[i - 1];
       const solo = rows[i].photos[0];
       const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
+      const merged = [...rows[i - 1].photos, ...rows[i].photos];
+      let h = recompH(merged);
+      // If merge exceeds orientation max, cap height to full-row height to prevent oversized tiles
       const max = isLandscape ? landscapeMax : portraitMax;
-      if (prev.photos.length + 1 <= max) {
-        // Safe to merge — stays within max
-        const merged = [...prev.photos, ...rows[i].photos];
-        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
-        i--;
-      } else {
-        // Merging would overflow — cap height so the lone photo isn't oversized
-        rows[i] = { photos: rows[i].photos, height: Math.min(rows[i].height, capH(rows[i].photos, isLandscape)) };
-      }
+      if (merged.length > max) h = Math.min(h, capH(merged, isLandscape));
+      rows.splice(i - 1, 2, { photos: merged, height: h });
+      i--;
     }
   }
-  // Handle rows[0] single-photo: try merge forward, else cap height
+  // Handle rows[0] single-photo: merge forward into rows[1]
   if (rows.length >= 2 && rows[0].photos.length === 1) {
     const solo = rows[0].photos[0];
     const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
+    const merged = [...rows[0].photos, ...rows[1].photos];
+    let h = recompH(merged);
     const max = isLandscape ? landscapeMax : portraitMax;
-    if (rows[1].photos.length + 1 <= max) {
-      const merged = [...rows[0].photos, ...rows[1].photos];
-      rows.splice(0, 2, { photos: merged, height: recompH(merged) });
-    } else {
-      rows[0] = { photos: rows[0].photos, height: Math.min(rows[0].height, capH(rows[0].photos, isLandscape)) };
-    }
+    if (merged.length > max) h = Math.min(h, capH(merged, isLandscape));
+    rows.splice(0, 2, { photos: merged, height: h });
   }
 
   return rows;
