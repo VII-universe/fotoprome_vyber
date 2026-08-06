@@ -156,22 +156,45 @@ function computeJustifiedRows(
     rows.push({ photos: row, height: Math.round(Math.min(naturalH, cap)) });
   }
 
-  // Merge any single-photo rows into the previous row (recalculate height).
+  // Merge single-photo rows into an adjacent row, but only when it won't exceed the orientation max.
+  // If merging would overflow the max, cap the lone row's height instead (same as full row height).
   const recompH = (photos: GalleryPhoto[]) => {
     const sumR = photos.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
     return Math.round((containerWidth - (photos.length - 1) * gap) / sumR);
   };
+  const capH = (photos: GalleryPhoto[], isLandscape: boolean) => {
+    const max = isLandscape ? landscapeMax : portraitMax;
+    const fullSumR = max * (isLandscape ? 3 / 2 : 2 / 3);
+    return Math.round((containerWidth - (max - 1) * gap) / fullSumR);
+  };
   for (let i = rows.length - 1; i >= 0; i--) {
     if (rows[i].photos.length === 1 && i > 0) {
-      const merged = [...rows[i - 1].photos, ...rows[i].photos];
-      rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
-      i--; // skip the row we just merged into
+      const prev = rows[i - 1];
+      const solo = rows[i].photos[0];
+      const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
+      const max = isLandscape ? landscapeMax : portraitMax;
+      if (prev.photos.length + 1 <= max) {
+        // Safe to merge — stays within max
+        const merged = [...prev.photos, ...rows[i].photos];
+        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
+        i--;
+      } else {
+        // Merging would overflow — cap height so the lone photo isn't oversized
+        rows[i] = { photos: rows[i].photos, height: Math.min(rows[i].height, capH(rows[i].photos, isLandscape)) };
+      }
     }
   }
-  // Handle the edge case where rows[0] is still a single-photo row (merge forward into rows[1])
+  // Handle rows[0] single-photo: try merge forward, else cap height
   if (rows.length >= 2 && rows[0].photos.length === 1) {
-    const merged = [...rows[0].photos, ...rows[1].photos];
-    rows.splice(0, 2, { photos: merged, height: recompH(merged) });
+    const solo = rows[0].photos[0];
+    const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
+    const max = isLandscape ? landscapeMax : portraitMax;
+    if (rows[1].photos.length + 1 <= max) {
+      const merged = [...rows[0].photos, ...rows[1].photos];
+      rows.splice(0, 2, { photos: merged, height: recompH(merged) });
+    } else {
+      rows[0] = { photos: rows[0].photos, height: Math.min(rows[0].height, capH(rows[0].photos, isLandscape)) };
+    }
   }
 
   return rows;
