@@ -2,6 +2,8 @@
 
 import { X, Package } from "lucide-react";
 import { useGalleryStore, PACKAGES, COLOR_LABELS, SIZE_LABELS } from "@/lib/gallery-store";
+
+const BASE = "https://v1.fotoprome.cz";
 import type { SizeOption } from "@/lib/gallery-store";
 
 const SIZES: { id: SizeOption; price: number }[] = [
@@ -184,8 +186,9 @@ export function VyberPanel({ open, onClose }: VyberPanelProps) {
                 {/* Thumbnail */}
                 <div style={{ position: "relative", flexShrink: 0, width: 96, height: 64, background: "#e8d8c8", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/api/proxy?url=${encodeURIComponent(photo.thumbUrl)}`}
+                    src={`${BASE}${photo.thumbUrl}`}
                     alt={`Foto #${photo.num}`}
                     style={{
                       maxWidth: "100%", maxHeight: "100%",
