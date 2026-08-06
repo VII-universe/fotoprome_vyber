@@ -120,99 +120,91 @@ function computeJustifiedRows(
   portraitMax: number,
   landscapeMax: number,
 ): { photos: GalleryPhoto[]; height: number }[] {
-  const rows: { photos: GalleryPhoto[]; height: number }[] = [];
-  let row: GalleryPhoto[] = [];
-  let rowLandscape: boolean | null = null;
+  const isLandscape = (p: GalleryPhoto) => (ratios.get(p.id) ?? 2 / 3) > 1.0;
 
-  const flush = () => {
-    const sumR = row.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
-    const h = Math.round((containerWidth - (row.length - 1) * gap) / sumR);
-    rows.push({ photos: row, height: h });
+  // Compute justified height for a set of photos filling containerWidth
+  const rowH = (ps: GalleryPhoto[]) => {
+    const sumR = ps.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
+    return Math.round((containerWidth - (ps.length - 1) * gap) / sumR);
+  };
+
+  // Height a full row of `count` same-orientation photos would have
+  const fullH = (count: number, land: boolean) => {
+    const avgR = land ? 3 / 2 : 2 / 3;
+    return Math.round((containerWidth - (count - 1) * gap) / (count * avgR));
+  };
+
+  // Step 1 — build rows, flushing on orientation change or count limit
+  const rows: { photos: GalleryPhoto[]; height: number; land: boolean }[] = [];
+  let row: GalleryPhoto[] = [];
+  let rowLand: boolean | null = null;
+
+  const flush = (partial = false) => {
+    const land = rowLand!;
+    const max = land ? landscapeMax : portraitMax;
+    let h = rowH(row);
+    // Cap partial rows so they don't appear oversized
+    if (partial && row.length < max) h = Math.min(h, fullH(max, land));
+    rows.push({ photos: row, height: h, land });
     row = [];
-    rowLandscape = null;
+    rowLand = null;
   };
 
   for (const photo of photos) {
-    const ratio = ratios.get(photo.id) ?? (2 / 3);
-    const landscape = ratio > 1.0;
-    const max = landscape ? landscapeMax : portraitMax;
-
-    if (row.length > 0) {
-      if (landscape !== rowLandscape || row.length >= max) flush();
-    }
-    if (row.length === 0) rowLandscape = landscape;
+    const land = isLandscape(photo);
+    const max = land ? landscapeMax : portraitMax;
+    if (row.length > 0 && (land !== rowLand || row.length >= max)) flush();
+    if (row.length === 0) rowLand = land;
     row.push(photo);
   }
+  if (row.length > 0) flush(true);
 
-  if (row.length > 0) {
-    const sumR = row.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
-    const naturalH = (containerWidth - (row.length - 1) * gap) / sumR;
-    // Cap partial portrait rows to the same height as a full portrait row so they don't look oversized
-    let cap = targetHeight;
-    if (!rowLandscape && row.length < portraitMax) {
-      const fullSumR = portraitMax * (2 / 3);
-      cap = Math.round((containerWidth - (portraitMax - 1) * gap) / fullSumR);
-    }
-    rows.push({ photos: row, height: Math.round(Math.min(naturalH, cap)) });
-  }
+  // Step 2 — eliminate single-photo rows by merging into an adjacent same-orientation row.
+  // Rules:
+  //   Landscape single → always merge (backward preferred, forward for rows[0]).
+  //     If merge would exceed landscapeMax, still merge but cap height.
+  //   Portrait single → merge only if result is exactly portraitMax (fills the row perfectly).
+  //     Otherwise cap height — never create a 2-portrait row.
+  //   Never merge rows of different orientations.
 
-  // Merge single-photo rows into an adjacent row, but only when it won't exceed the orientation max.
-  // If merging would overflow the max, cap the lone row's height instead (same as full row height).
-  const recompH = (photos: GalleryPhoto[]) => {
-    const sumR = photos.reduce((s, p) => s + (ratios.get(p.id) ?? 2 / 3), 0);
-    return Math.round((containerWidth - (photos.length - 1) * gap) / sumR);
+  const merge = (i: number, j: number) => {
+    const merged = [...rows[i].photos, ...rows[j].photos];
+    const land = rows[i].land;
+    const max = land ? landscapeMax : portraitMax;
+    let h = rowH(merged);
+    if (merged.length > max) h = Math.min(h, fullH(max, land));
+    return { photos: merged, height: h, land };
   };
-  const capH = (photos: GalleryPhoto[], isLandscape: boolean) => {
-    const max = isLandscape ? landscapeMax : portraitMax;
-    const fullSumR = max * (isLandscape ? 3 / 2 : 2 / 3);
-    return Math.round((containerWidth - (max - 1) * gap) / fullSumR);
-  };
-  // Portrait rows must always have exactly portraitMax (3) photos when full.
-  // Partial portrait rows (< portraitMax) get their height capped — never steal/balance into 2-portrait rows.
-  // Portrait merge rule: only merge backward if prev.length + 1 === portraitMax (fills exactly).
-  // Landscape: merge/cap to avoid single-photo rows.
+
   for (let i = rows.length - 1; i >= 1; i--) {
     if (rows[i].photos.length !== 1) continue;
-    const solo = rows[i].photos[0];
-    const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
-    const max = isLandscape ? landscapeMax : portraitMax;
     const prev = rows[i - 1];
-
-    if (!isLandscape) {
-      // Portrait: only merge if it fills the row exactly (prev has max-1 photos)
-      if (prev.photos.length === max - 1) {
-        const merged = [...prev.photos, solo];
-        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
+    if (rows[i].land !== prev.land) {
+      // Different orientations — just cap height
+      rows[i] = { ...rows[i], height: Math.min(rows[i].height, fullH(rows[i].land ? landscapeMax : portraitMax, rows[i].land)) };
+      continue;
+    }
+    if (!rows[i].land) {
+      // Portrait: only merge when result is exactly portraitMax
+      if (prev.photos.length === portraitMax - 1) {
+        rows.splice(i - 1, 2, merge(i - 1, i));
         i--;
       } else {
-        // Cap height to full-portrait-row height — don't create a 2-portrait row
-        rows[i] = { photos: rows[i].photos, height: Math.min(rows[i].height, capH(rows[i].photos, false)) };
+        rows[i] = { ...rows[i], height: Math.min(rows[i].height, fullH(portraitMax, false)) };
       }
     } else {
-      // Landscape: merge if within max, otherwise cap
-      if (prev.photos.length + 1 <= max) {
-        const merged = [...prev.photos, solo];
-        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
-        i--;
-      } else {
-        const merged = [...prev.photos, solo];
-        const h = Math.min(recompH(merged), capH(merged, true));
-        rows.splice(i - 1, 2, { photos: merged, height: h });
-        i--;
-      }
+      // Landscape: always merge backward
+      rows.splice(i - 1, 2, merge(i - 1, i));
+      i--;
     }
   }
-  // rows[0] single-photo: cap height (portrait) or merge forward (landscape)
-  if (rows[0]?.photos.length === 1 && rows.length >= 2) {
-    const solo = rows[0].photos[0];
-    const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
-    if (!isLandscape) {
-      rows[0] = { photos: rows[0].photos, height: Math.min(rows[0].height, capH(rows[0].photos, false)) };
+
+  // rows[0] single: try forward merge (same orientation landscape only)
+  if (rows.length >= 2 && rows[0].photos.length === 1) {
+    if (rows[0].land && rows[1].land) {
+      rows.splice(0, 2, merge(0, 1));
     } else {
-      const max = landscapeMax;
-      const merged = [solo, ...rows[1].photos];
-      const h = merged.length > max ? Math.min(recompH(merged), capH(merged, true)) : recompH(merged);
-      rows.splice(0, 2, { photos: merged, height: h });
+      rows[0] = { ...rows[0], height: Math.min(rows[0].height, fullH(rows[0].land ? landscapeMax : portraitMax, rows[0].land)) };
     }
   }
 
