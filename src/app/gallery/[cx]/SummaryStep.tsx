@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useGalleryStore, SIZE_LABELS, COLOR_LABELS, ADDON_PRODUCTS, PACKAGES,
-  RETOUCH_LABELS, RETOUCH_PRICES, type ColorOption, type SizeOption, type RetouchLevel,
+  RETOUCH_LABELS, RETOUCH_PRICES, FRAME_PRICES, type ColorOption, type SizeOption, type RetouchLevel,
 } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Loader2, Pencil, Trash2, Plus, Minus, X, Check } from "lucide-react";
@@ -64,11 +64,12 @@ export function SummaryStep({ cx }: { cx: string }) {
     c.prints.forEach(l => {
       if (!l.qty) return;
       const price = PRICE_MAP[l.size] ?? 0;
+      const framePrice = FRAME_PRICES[l.frame ?? ""] ?? 0;
       if (l.size === "retouch_only") { printSubtotal += price * l.qty; return; }
-      if (isIncluded && l.size === "S") { printSubtotal += 0; return; }
-      if (isIncluded) { printSubtotal += (price - S_PRICE) * l.qty; return; }
-      if (isExtra && l.size === "S") { printSubtotal += activePkg!.extraPhotoPrice * l.qty; return; }
-      printSubtotal += price * l.qty;
+      if (isIncluded && l.size === "S") { printSubtotal += framePrice * l.qty; return; }
+      if (isIncluded) { printSubtotal += (price - S_PRICE + framePrice) * l.qty; return; }
+      if (isExtra && l.size === "S") { printSubtotal += (activePkg!.extraPhotoPrice + framePrice) * l.qty; return; }
+      printSubtotal += (price + framePrice) * l.qty;
     });
   });
 
@@ -84,17 +85,20 @@ export function SummaryStep({ cx }: { cx: string }) {
     const code = voucherInput.trim().toUpperCase();
     if (!code) return;
     setVoucherLoading(true);
-    // TODO: replace with real API call
-    await new Promise((r) => setTimeout(r, 600));
-    const DEMO_CODES: Record<string, number> = { "VITEJ10": 10, "SLEVA100": 100, "FOTO200": 200 };
-    const amount = DEMO_CODES[code];
-    if (amount) {
-      setDiscount(code, amount);
-      setVoucherInput(code);
-    } else {
-      setDiscount("", 0);
+    try {
+      // TODO: replace with real API call
+      await new Promise((r) => setTimeout(r, 600));
+      const DEMO_CODES: Record<string, number> = { "VITEJ10": 10, "SLEVA100": 100, "FOTO200": 200 };
+      const amount = DEMO_CODES[code];
+      if (amount) {
+        setDiscount(code, amount);
+        setVoucherInput(code);
+      } else {
+        setDiscount("", 0);
+      }
+    } finally {
+      setVoucherLoading(false);
     }
-    setVoucherLoading(false);
   }
 
   function removePhoto(photo: GalleryPhoto) {

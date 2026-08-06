@@ -162,6 +162,11 @@ function computeJustifiedRows(
       i--; // skip the row we just merged into
     }
   }
+  // Handle the edge case where rows[0] is still a single-photo row (merge forward into rows[1])
+  if (rows.length >= 2 && rows[0].photos.length === 1) {
+    const merged = [...rows[0].photos, ...rows[1].photos];
+    rows.splice(0, 2, { photos: merged, height: recompH(merged) });
+  }
 
   return rows;
 }
