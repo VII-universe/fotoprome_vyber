@@ -167,54 +167,53 @@ function computeJustifiedRows(
     const fullSumR = max * (isLandscape ? 3 / 2 : 2 / 3);
     return Math.round((containerWidth - (max - 1) * gap) / fullSumR);
   };
-  // Eliminate single-photo rows without exceeding orientation max.
-  // Strategy: if merging backward would stay within max → merge.
-  //           if merging would overflow → steal last photo from prev row to balance ([3,1]→[2,2]).
-  //           if stealing would leave prev with 1 photo → merge all with height cap (last resort).
-  const fixSingle = (idx: number, direction: "backward" | "forward") => {
-    const solo = rows[idx].photos[0];
+  // Portrait rows must always have exactly portraitMax (3) photos when full.
+  // Partial portrait rows (< portraitMax) get their height capped — never steal/balance into 2-portrait rows.
+  // Portrait merge rule: only merge backward if prev.length + 1 === portraitMax (fills exactly).
+  // Landscape: merge/cap to avoid single-photo rows.
+  for (let i = rows.length - 1; i >= 1; i--) {
+    if (rows[i].photos.length !== 1) continue;
+    const solo = rows[i].photos[0];
     const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
     const max = isLandscape ? landscapeMax : portraitMax;
-    const adjIdx = direction === "backward" ? idx - 1 : idx + 1;
-    const adj = rows[adjIdx];
+    const prev = rows[i - 1];
 
-    if (adj.photos.length + 1 <= max) {
-      // Safe merge within max
-      const merged = direction === "backward"
-        ? [...adj.photos, solo]
-        : [solo, ...adj.photos];
-      rows.splice(Math.min(idx, adjIdx), 2, { photos: merged, height: recompH(merged) });
-      return true; // spliced
-    } else if (adj.photos.length >= 2) {
-      // Steal: take one photo from adj to balance
-      const newAdj = direction === "backward" ? adj.photos.slice(0, -1) : adj.photos.slice(1);
-      const stolen = direction === "backward" ? adj.photos[adj.photos.length - 1] : adj.photos[0];
-      const newCurr = direction === "backward" ? [stolen, solo] : [solo, stolen];
-      if (newAdj.length >= 2) {
-        // Both resulting rows are safe (≥2 photos each)
-        rows[adjIdx] = { photos: newAdj, height: recompH(newAdj) };
-        rows[idx] = { photos: newCurr, height: recompH(newCurr) };
-        return false; // in-place, no splice
+    if (!isLandscape) {
+      // Portrait: only merge if it fills the row exactly (prev has max-1 photos)
+      if (prev.photos.length === max - 1) {
+        const merged = [...prev.photos, solo];
+        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
+        i--;
+      } else {
+        // Cap height to full-portrait-row height — don't create a 2-portrait row
+        rows[i] = { photos: rows[i].photos, height: Math.min(rows[i].height, capH(rows[i].photos, false)) };
+      }
+    } else {
+      // Landscape: merge if within max, otherwise cap
+      if (prev.photos.length + 1 <= max) {
+        const merged = [...prev.photos, solo];
+        rows.splice(i - 1, 2, { photos: merged, height: recompH(merged) });
+        i--;
+      } else {
+        const merged = [...prev.photos, solo];
+        const h = Math.min(recompH(merged), capH(merged, true));
+        rows.splice(i - 1, 2, { photos: merged, height: h });
+        i--;
       }
     }
-    // Last resort: merge and cap height
-    const merged = direction === "backward"
-      ? [...adj.photos, solo]
-      : [solo, ...adj.photos];
-    const h = Math.min(recompH(merged), capH(merged, isLandscape));
-    rows.splice(Math.min(idx, adjIdx), 2, { photos: merged, height: h });
-    return true; // spliced
-  };
-
-  for (let i = rows.length - 1; i >= 1; i--) {
-    if (rows[i].photos.length === 1) {
-      const spliced = fixSingle(i, "backward");
-      if (spliced) i--; // splice removed two rows; compensate so loop doesn't skip
-    }
   }
-  // rows[0] might still be a single — try merging forward
-  if (rows.length >= 2 && rows[0].photos.length === 1) {
-    fixSingle(0, "forward");
+  // rows[0] single-photo: cap height (portrait) or merge forward (landscape)
+  if (rows[0]?.photos.length === 1 && rows.length >= 2) {
+    const solo = rows[0].photos[0];
+    const isLandscape = (ratios.get(solo.id) ?? 2 / 3) > 1.0;
+    if (!isLandscape) {
+      rows[0] = { photos: rows[0].photos, height: Math.min(rows[0].height, capH(rows[0].photos, false)) };
+    } else {
+      const max = landscapeMax;
+      const merged = [solo, ...rows[1].photos];
+      const h = merged.length > max ? Math.min(recompH(merged), capH(merged, true)) : recompH(merged);
+      rows.splice(0, 2, { photos: merged, height: h });
+    }
   }
 
   return rows;
