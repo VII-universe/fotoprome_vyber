@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useGalleryStore, PACKAGES } from "@/lib/gallery-store";
 import { toast } from "sonner";
 import {
@@ -104,6 +104,49 @@ function SmartGrid({
   );
 }
 
+// ── Justified row layout ───────────────────────────────────────────────────
+// Groups photos into rows so each row fills containerWidth exactly.
+// Photos without a known ratio default to 2:3 portrait.
+
+function computeJustifiedRows(
+  photos: GalleryPhoto[],
+  ratios: Map<string, number>,
+  containerWidth: number,
+  targetHeight: number,
+  gap: number,
+): { photos: GalleryPhoto[]; height: number }[] {
+  const rows: { photos: GalleryPhoto[]; height: number }[] = [];
+  let row: GalleryPhoto[] = [];
+  let rowSumRatios = 0;
+
+  for (const photo of photos) {
+    const ratio = ratios.get(photo.id) ?? (2 / 3);
+    if (row.length > 0) {
+      // Width this photo would add at targetHeight, plus gap
+      const newSumRatios = rowSumRatios + ratio;
+      const totalGaps    = row.length * gap; // gap between existing + new photo
+      const projectedH   = (containerWidth - totalGaps) / newSumRatios;
+      // If adding it makes the row shorter than 60% of target, start new row
+      if (projectedH < targetHeight * 0.6) {
+        const totalGapsCurrent = (row.length - 1) * gap;
+        const height = Math.round((containerWidth - totalGapsCurrent) / rowSumRatios);
+        rows.push({ photos: row, height });
+        row = [];
+        rowSumRatios = 0;
+      }
+    }
+    row.push(photo);
+    rowSumRatios += ratio;
+  }
+
+  // Last (partial) row: use targetHeight, don't stretch
+  if (row.length > 0) {
+    rows.push({ photos: row, height: targetHeight });
+  }
+
+  return rows;
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 export function DreamboxStep({ cx }: { cx: string }) {
@@ -115,6 +158,9 @@ export function DreamboxStep({ cx }: { cx: string }) {
   const [viewMode,      setViewMode]      = useState<ViewMode>("masonry");
   const [dreamboxOrder, setDreamboxOrder] = useState<string[]>(() => [...dreambox]);
   const [landscapeIds,  setLandscapeIds]  = useState<Set<string>>(new Set());
+  const [photoRatios,   setPhotoRatios]   = useState<Map<string, number>>(new Map());
+  const [galleryWidth,  setGalleryWidth]  = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -123,6 +169,37 @@ export function DreamboxStep({ cx }: { cx: string }) {
       .then(d => { if (typeof d.balance === "number") setPhotoCredits(d.balance); })
       .catch(() => {});
   }, [setPhotoCredits]);
+
+  // Track gallery container width for justified layout
+  useEffect(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver((entries) => {
+      setGalleryWidth(entries[0].contentRect.width); // eslint-disable-line react-hooks/set-state-in-effect
+    });
+    obs.observe(el);
+    setGalleryWidth(el.getBoundingClientRect().width); // eslint-disable-line react-hooks/set-state-in-effect
+    return () => obs.disconnect();
+  }, []);
+
+  // Preload thumbnails to detect aspect ratios for justified layout
+  useEffect(() => {
+    photos.forEach((photo) => {
+      if (photoRatios.has(photo.id)) return;
+      const img = new window.Image();
+      img.onload = () => {
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          setPhotoRatios((prev) => { // eslint-disable-line react-hooks/set-state-in-effect
+            if (prev.has(photo.id)) return prev;
+            const next = new Map(prev);
+            next.set(photo.id, img.naturalWidth / img.naturalHeight);
+            return next;
+          });
+        }
+      };
+      img.src = `${BASE}${photo.thumbUrl}`;
+    });
+  }, [photos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOrientationDetect = useCallback((id: string) => {
     setLandscapeIds(prev => {
@@ -437,6 +514,7 @@ export function DreamboxStep({ cx }: { cx: string }) {
       </div>
 
       {/* ── Photo grid ── */}
+      <div ref={galleryRef}>
       {filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "64px 0", color: "var(--fp-ink-3)" }}>
           {filterMode === "dreambox"
@@ -492,27 +570,35 @@ export function DreamboxStep({ cx }: { cx: string }) {
         )
 
       ) : (
-        // ── Justified gallery: všechny fotky stejná výška, šířka = přirozený poměr fotky ──
+        // ── Justified gallery: řádky plní celou šířku ──
         (() => {
-          const H = isMobile ? 180 : 270;
-          const gap = isMobile ? 6 : 10;
+          const targetH = isMobile ? 200 : 300;
+          const gap     = isMobile ? 6 : 10;
+          const W       = galleryWidth || 800;
+          const rows    = computeJustifiedRows(filtered, photoRatios, W, targetH, gap);
           return (
-            <div style={{ display: "flex", flexWrap: "wrap", gap, alignContent: "flex-start" }}>
-              {filtered.map((photo) => (
-                <JustifiedPhotoTile
-                  key={photo.id}
-                  photo={photo}
-                  height={H}
-                  selected={dreambox.has(photo.id)}
-                  saving={savingId === photo.id}
-                  onHeart={handleHeart}
-                  onZoom={setLightboxPhoto}
-                />
+            <div style={{ display: "flex", flexDirection: "column", gap }}>
+              {rows.map((row, ri) => (
+                <div key={ri} style={{ display: "flex", gap }}>
+                  {row.photos.map((photo) => (
+                    <JustifiedPhotoTile
+                      key={photo.id}
+                      photo={photo}
+                      width={Math.round(row.height * (photoRatios.get(photo.id) ?? 2 / 3))}
+                      height={Math.round(row.height)}
+                      selected={dreambox.has(photo.id)}
+                      saving={savingId === photo.id}
+                      onHeart={handleHeart}
+                      onZoom={setLightboxPhoto}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           );
         })()
       )}
+      </div>
 
       {/* ── Upsell nudge ── */}
       {(() => {
@@ -879,12 +965,11 @@ function SquareTile({ photo, selected, saving, onHeart, onZoom }: TileBaseProps)
 }
 
 // ── Justified gallery tile ────────────────────────────────────────────────
-// Displays fullUrl at full quality. Width is pre-detected by loading the
-// lightweight thumbUrl in a background Image object, so the container has
-// the correct aspect-ratio before the full image paints.
+// Width and height come from the parent's row layout computation.
 
 interface JustifiedTileProps {
   photo: GalleryPhoto;
+  width: number;
   height: number;
   selected: boolean;
   saving: boolean;
@@ -892,20 +977,9 @@ interface JustifiedTileProps {
   onZoom: (photo: GalleryPhoto) => void;
 }
 
-function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }: JustifiedTileProps) {
+function JustifiedPhotoTile({ photo, width, height, selected, saving, onHeart, onZoom }: JustifiedTileProps) {
   const [hovered, setHovered] = useState(false);
-  const [tileWidth, setTileWidth] = useState(Math.round(height * 2 / 3)); // portrait until thumb detected
   const isActive = hovered || selected;
-
-  useEffect(() => {
-    const img = new window.Image();
-    img.onload = () => {
-      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-        setTileWidth(Math.round(height * img.naturalWidth / img.naturalHeight)); // eslint-disable-line react-hooks/set-state-in-effect
-      }
-    };
-    img.src = `${BASE}${photo.thumbUrl}`;
-  }, [photo.thumbUrl, height]);
 
   return (
     <div
@@ -914,7 +988,7 @@ function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }
       onClick={() => onZoom(photo)}
       style={{
         flexShrink: 0,
-        width: tileWidth,
+        width,
         height,
         position: "relative",
         overflow: "hidden",
@@ -922,7 +996,7 @@ function JustifiedPhotoTile({ photo, height, selected, saving, onHeart, onZoom }
         background: "#ddd0bc",
         outline: selected ? "2px solid var(--fp-accent)" : "2px solid transparent",
         outlineOffset: 2,
-        transition: "width 0.15s ease, outline 0.15s ease",
+        transition: "outline 0.15s ease",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
